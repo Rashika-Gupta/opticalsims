@@ -50,8 +50,9 @@
 // PhysicsList
 #include "G4EmStandardPhysics_option4.hh"
 #include "PhysicsList.hh"
+#include "G4OpticalPhysics.hh"
 // macro loader
-#include  "include/config.h"
+#include "include/config.h"
 
 // Opticks related header files
 #include "G4OpticalPhysicsOpticks.hh"
@@ -61,99 +62,104 @@
 #include "OPTICKS_LOG.hh"
 #include <cuda_runtime.h>
 #endif
+#include <accel/TrackingManagerConstructor.hh>
+#include <accel/TrackingManagerIntegration.hh>
 
+#include "MakeCelerOptions.hh"
 
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
-    // Opticks Initialization
-  #ifdef With_Opticks
-      int device;
-      OPTICKS_LOG(argc,argv); // This is needed for opticks
-      cudaDeviceSynchronize();
-      SEventConfig::Initialize();
-      cudaGetDevice(&device);
-      std::cout<<"GPU Device ID "<<device<< std::endl;
-      /*
-        if(device == 1) { cudaSetDevice(0); }
-        std::cout<<"Device "<<device<< std::endl;
-      */
-  #endif
+  // Opticks Initialization
+#ifdef With_Opticks
+  int device;
+  OPTICKS_LOG(argc, argv); // This is needed for opticks
+  cudaDeviceSynchronize();
+  SEventConfig::Initialize();
+  cudaGetDevice(&device);
+  std::cout << "GPU Device ID " << device << std::endl;
+  /*
+    if(device == 1) { cudaSetDevice(0); }
+    std::cout<<"Device "<<device<< std::endl;
+  */
+#endif
 
   G4cout << G4endl;
-  G4cout <<" Usage : " << G4endl;
+  G4cout << " Usage : " << G4endl;
   G4cout << "Interactive Mode : ./gdml_det i ../GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml macros/g04.mac"
          << G4endl;
   G4cout << "Batch Mode : ./gdml_det ../GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml macros/g04.mac"
          << G4endl;
 
-   if (argc<2)
-   {
-      G4cout << "Error! Mandatory input file is not specified!" << G4endl;
-      G4cout << G4endl;
-      return -1;
-   }
+  if (argc < 2)
+  {
+    G4cout << "Error! Mandatory input file is not specified!" << G4endl;
+    G4cout << G4endl;
+    return -1;
+  }
 
-
-   // Detect interactive mode (if only one argument) and define UI session
-   auto * fReader=new ColorReader;
-   auto parser= new G4GDMLParser(fReader);
-   G4UIExecutive* ui = 0;
-   if ( strcmp(argv[1],"i") == 0 ) {
-     ui = new G4UIExecutive(argc, argv);
-     parser->Read(argv[2],false);
-   }
+  // Detect interactive mode (if only one argument) and define UI session
+  auto *fReader = new ColorReader;
+  auto parser = new G4GDMLParser(fReader);
+  G4UIExecutive *ui = 0;
+  if (strcmp(argv[1], "i") == 0)
+  {
+    ui = new G4UIExecutive(argc, argv);
+    parser->Read(argv[2], false);
+  }
   else
-   {
-     parser->Read(argv[1],false);
-   }
+  {
+    parser->Read(argv[1], false);
+  }
 
-   auto* runManager = G4RunManagerFactory::CreateRunManager();
+  auto *runManager = G4RunManagerFactory::CreateRunManager(G4RunManagerType::Serial);
 
   // Physics list
-  G4VModularPhysicsList* physics_list = new PhysicsList();
+  G4VModularPhysicsList *physics_list = new PhysicsList();
 
-  #ifdef With_Opticks
-    std::cout << "Defining Opticks Physics List" << std::endl;
-    physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
-  #else
-    //physics_list->RegisterPhysics(new G4OpticalPhysics());
-    physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
+#ifdef With_Opticks
+  std::cout << "Defining Opticks Physics List" << std::endl;
+  physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
+#else
+  auto opticalPhysics = new G4OpticalPhysics(true);
+  physics_list->RegisterPhysics(opticalPhysics);
+#endif
 
-  #endif
+  auto &tmi = celeritas::TrackingManagerIntegration::Instance();
+  runManager->SetUserInitialization(new DetectorConstruction(parser));
+  runManager->SetUserInitialization(physics_list);
+  physics_list->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
+  tmi.SetOptions(MakeCelerOptions());
+  // User action initialization
+  runManager->SetUserInitialization(new ActionInitialization());
+  runManager->SetNumberOfThreads(1);
+  runManager->Initialize();
 
-   runManager->SetUserInitialization(new DetectorConstruction(parser));
-   runManager->SetUserInitialization(physics_list);
-   // User action initialization
-   runManager->SetUserInitialization(new ActionInitialization());
-   runManager->SetNumberOfThreads(1);
-   runManager->Initialize();
+  // Initialize visualization
+  G4VisManager *visManager = new G4VisExecutive;
+  visManager->Initialize();
 
-   // Initialize visualization
-   G4VisManager* visManager = new G4VisExecutive;
-   visManager->Initialize();
+  // Get the pointer to the User Interface manager
+  G4UImanager *UImanager = G4UImanager::GetUIpointer();
 
-   // Get the pointer to the User Interface manager
-   G4UImanager* UImanager = G4UImanager::GetUIpointer();
+  // Process macro or start UI session
+  if (!ui) // batch mode
+  {
+    G4String command = "/control/execute ";
+    G4String fileName = argv[2];
+    UImanager->ApplyCommand(command + fileName);
+  }
+  else // interactive mode
+  {
+    G4String command = "/control/execute ";
+    G4String fileName = argv[3];
+    UImanager->ApplyCommand(command + fileName);
 
-   // Process macro or start UI session
-   if ( ! ui )   // batch mode
-   {
-     G4String command = "/control/execute ";
-     G4String fileName = argv[2];
-     UImanager->ApplyCommand(command+fileName);
-   }
-   else           // interactive mode
-   {
-     G4String command = "/control/execute ";
-     G4String fileName = argv[3];
-     UImanager->ApplyCommand(command+fileName);
-
-     UImanager->ApplyCommand("/control/execute vis.mac");
-     ui->SessionStart();
-     delete ui;
-   }
-   delete visManager;
-   delete runManager;
-   delete parser;
-   delete fReader;
+    UImanager->ApplyCommand("/control/execute vis.mac");
+    ui->SessionStart();
+    delete ui;
+  }
+  delete visManager;
+  delete runManager;
+  delete parser;
+  delete fReader;
 }
