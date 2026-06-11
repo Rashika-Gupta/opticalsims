@@ -19,6 +19,9 @@ option (With_Opticks OFF)
 
 option (With_DEBUG OFF)
 
+set(Celeritas_DIR "/Users/r1i/Desktop/project/forked/celeritas/build/lib/cmake/Celeritas")
+find_package(Celeritas 0.7 REQUIRED)
+
 if(With_Opticks)
   message(STATUS "WITH_OPTICKS is set ON")
   list(APPEND CMAKE_MODULE_PATH "$ENV{OPTICKS_HOME}/cmake/Modules")
@@ -59,9 +62,17 @@ endif()
 #
 add_executable(gdml_det gdml_det.cc ${sources} ${headers})
 
-target_link_libraries(gdml_det ${Geant4_LIBRARIES} )
-
-
+#target_link_libraries(gdml_det ${Geant4_LIBRARIES} )
+if(NOT Celeritas_FOUND)
+  message(FATAL_ERROR
+    "No Celeritas installation found.\n"
+    "Export Celeritas_ROOT=/path/to/celeritas/install or use CMAKE_INSTALL_PREFIX"
+  )
+endif()
+if(NOT CELERITAS_USE_Geant4)
+  message(SEND_ERROR "This example requires Geant4 support "
+    "to be enabled in Celeritas")
+endif()
 # Link Opticks Libraries
 if (With_Opticks)
   target_link_libraries(gdml_det Opticks::G4CX Opticks::U4)
@@ -74,14 +85,19 @@ configure_file(config.h.in ${CMAKE_BINARY_DIR}/include/config.h)
 # Find the ROOT package
 #    "REQUIRED" fails the build if ROOT isn't found.
 #    "COMPONENTS" allows you to specify specific libraries (optional but good practice).
-find_package(ROOT REQUIRED COMPONENTS RIO Net Tree )
+find_package(ROOT REQUIRED COMPONENTS RIO Net Tree ROOTDataFrame )
 
 # Setup ROOT definitions and include directories
 
-include(${ROOT_USE_FILE})
-include_directories(${ROOT_INCLUDE_DIRS})
-target_link_libraries(gdml_det ${ROOT_LIBRARIES})
-
+target_link_libraries(gdml_det PRIVATE
+Celeritas::celeritas
+Celeritas::G4
+${Geant4_LIBRARIES}
+ROOT::RIO
+ROOT::Net
+ROOT::Tree
+ROOT::ROOTDataFrame
+)
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
 # build G04. This is so that we can run the executable directly because it
