@@ -34,6 +34,7 @@
 #define _DETECTORCONSTRUCTION_H_
 
 #include "G4VUserDetectorConstruction.hh"
+#include "SensitiveDetector.hh"
 
 class G4GDMLParser;
 class G4Material;
@@ -42,22 +43,20 @@ class G4OpticalSurface;
 
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
-  public: 
-    DetectorConstruction( const G4GDMLParser* parser);
+public:
+  DetectorConstruction(const G4GDMLParser *parser);
 
-    virtual G4VPhysicalVolume *Construct();  
-    virtual void ConstructSDandField();
-    std::vector<std::string_view> Split(const std::string_view & s,char del);
-    G4Material * fGetMaterial(G4String name);
-    void GetOpticalSurfaceFast();
-  std::map<G4String,G4int> fDetectIds;
-  std::map<G4String, G4OpticalSurface*> fOpticalSurfaces;
+  virtual G4VPhysicalVolume *Construct();
+  virtual void ConstructSDandField();
+  std::vector<std::string_view> Split(const std::string_view &s, char del);
+  G4Material *fGetMaterial(G4String name);
+  void GetOpticalSurfaceFast();
+  std::map<G4String, G4int> fDetectIds;
+  std::map<G4String, G4OpticalSurface *> fOpticalSurfaces;
 
-  private:
-    const G4GDMLParser * fParser;
-    G4VPhysicalVolume* fDetector;
-
-
+private:
+  const G4GDMLParser *fParser;
+  G4VPhysicalVolume *fDetector;
 };
 
 #endif
