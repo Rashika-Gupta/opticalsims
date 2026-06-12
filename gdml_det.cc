@@ -121,15 +121,18 @@ int main(int argc, char **argv)
   physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
 #else
   auto opticalPhysics = new G4OpticalPhysics(true);
+  auto opticalParams = G4OpticalParameters::Instance();
+  opticalParams->SetProcessActivation("Cerenkov", false);
   physics_list->RegisterPhysics(opticalPhysics);
 #endif
 
   auto &tmi = celeritas::TrackingManagerIntegration::Instance();
-  runManager->SetUserInitialization(new DetectorConstruction(parser));
-  runManager->SetUserInitialization(physics_list);
   physics_list->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
   tmi.SetOptions(MakeCelerOptions());
+  runManager->SetUserInitialization(physics_list);
+
   // User action initialization
+  runManager->SetUserInitialization(new DetectorConstruction(parser));
   runManager->SetUserInitialization(new ActionInitialization());
   runManager->SetNumberOfThreads(1);
   runManager->Initialize();
