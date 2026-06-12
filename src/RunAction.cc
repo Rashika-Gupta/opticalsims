@@ -83,6 +83,19 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     analysisManager->CreateNtupleIColumn("ProcessID");
     analysisManager->FinishNtuple();
 
+    // Celeritas Hits
+    analysisManager->CreateNtuple("CeleritasHits", "Celeritas Hits");
+    analysisManager->CreateNtupleIColumn("evtID");
+    analysisManager->CreateNtupleIColumn("SensorID");
+    analysisManager->CreateNtupleSColumn("SensorName");
+    analysisManager->CreateNtupleDColumn("x");
+    analysisManager->CreateNtupleDColumn("y");
+    analysisManager->CreateNtupleDColumn("z");
+    analysisManager->CreateNtupleDColumn("t");
+    analysisManager->CreateNtupleDColumn("wavelength");
+    //  analysisManager->CreateNtupleIColumn("ProcessID");
+    analysisManager->FinishNtuple();
+
     // PhotonInfo
     analysisManager->CreateNtuple("PhotonInfo", "PhotonInfo");
     analysisManager->CreateNtupleIColumn("G4ScintPhotons");

@@ -12,6 +12,7 @@
 #include <G4Neutron.hh>
 #include <G4OpticalPhoton.hh>
 #include <G4Positron.hh>
+#include "AnalysisManagerHelper.hh"
 #include </Users/r1i/Desktop/project/forked/celeritas/src/accel/AlongStepFactory.hh>
 #include </Users/r1i/Desktop/project/forked/celeritas/src/accel/SetupOptions.hh>
 #include "celeritas/optical/DetectorData.hh"
@@ -19,7 +20,7 @@
 #include "G4AnalysisManager.hh"
 #include "G4RunManager.hh"
 #include <celeritas/phys/PDGNumber.hh>
-
+#include <corecel/io/Logger.hh>
 //---------------------------------------------------------------------------/
 /*!
  * Load vector of \c G4ParticleDefinition from list of PDGs.
@@ -93,27 +94,31 @@ celeritas::SetupOptions MakeCelerOptions()
     int event_id = G4EventManager::GetEventManager()
                        ->GetConstCurrentEvent()
                        ->GetEventID();
+    std::vector<CelerOpticalHit> celer_hits;
+    celer_hits.reserve(hits.size());
+
+    for (auto const &hit : hits)
+    {
+      CelerOpticalHit h;
+      h.detector_id = hit.detector
+                          ? static_cast<int>(hit.detector.unchecked_get())
+                          : -1;
+      h.event_id = event_id;
+      h.x = static_cast<float>(hit.position[0]);
+      h.y = static_cast<float>(hit.position[1]);
+      h.z = static_cast<float>(hit.position[2]);
+      h.t = static_cast<float>(hit.time);
+      h.energy_mev = static_cast<float>(value_as<MevEnergy>(hit.energy));
+      // Convert MeV to nm: E[eV] = 1239.8 / lambda[nm]
+      float energy_ev = h.energy_mev * 1e6f;
+      h.wavelength_nm = (energy_ev > 0) ? (1239.8f / energy_ev) : -1.f;
+      celer_hits.push_back(h);
+    }
+
+    AnalysisManagerHelper::getInstance()->AddCelerHits(celer_hits);
     total_celer_optical += hits.size();
-    G4cout << "[DEBUG] Celeritas optical callback: " << hits.size()
-           << " hits (total so far: " << total_celer_optical << ")\n";
-    /*  for (auto const &hit : hits)
-      {
-        CelerOpticalHit h;
-        h.detector_id = hit.detector
-                            ? static_cast<int>(hit.detector.unchecked_get())
-                            : -1;
-        h.volume_instance_id = hit.volume_instance
-                                   ? static_cast<int>(
-                                         hit.volume_instance.unchecked_get())
-                                   : -1;
-        h.energy_mev = static_cast<float>(value_as<MevEnergy>(hit.energy));
-        h.event_id = event_id;
-        h.time = static_cast<float>(hit.time);
-        h.x = static_cast<float>(hit.position[0]);
-        h.y = static_cast<float>(hit.position[1]);
-        h.z = static_cast<float>(hit.position[2]);
-        SensitiveDetector::celer_optical_hits.push_back(h);
-      }*/
+    CELER_LOG(debug) << "[Celeritas] optical hits this flush: " << hits.size()
+                     << " | total: " << total_celer_optical << "\n";
   };
 
   return opts;
