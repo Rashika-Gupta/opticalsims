@@ -298,8 +298,8 @@
    <D value="1.40" unit="g/cm3"/>
    <fraction n="1.0000" ref="argon"/>
        <property name="RINDEX" ref="RINDEXLAR"/>
-       <!-- <property name="RAYLEIGH" ref="RAYLEIGH0x4b736f0"/> -->
-       <!--<property name="ABSLENGTH" ref="ABSLENGTH0x4b6ee30"/>-->
+        <property name="RAYLEIGH" ref="RAYLEIGHLAR"/> 
+       <property name="ABSLENGTH" ref="ABSLENGTHLAR"/>
        <!--<property name="GROUPVEL" ref="GROUPVEL0x4b6ecd0"/>-->
        <property name="FASTCOMPONENT" ref="SCINTLAR"/>
        <property name="SLOWCOMPONENT" ref="SCINTLAR"/>
