@@ -100,6 +100,9 @@ void AnalysisManagerHelper::SaveG4HitsToFile()
         AnaMngr->FillNtupleDColumn(2, 6, hit.GetTime());
         AnaMngr->FillNtupleDColumn(2, 7, hit.GetWave());
         AnaMngr->FillNtupleIColumn(2, 8, hit.GetPid());
+        AnaMngr->FillNtupleIColumn(2, 9, hit.GetTrackID());
+        AnaMngr->FillNtupleIColumn(2, 10, hit.GetNumSteps());
+        AnaMngr->FillNtupleDColumn(2, 11, hit.GetStepLength());
         AnaMngr->AddNtupleRow(2);
     }
     ArapucaHits.clear();
@@ -123,6 +126,9 @@ void AnalysisManagerHelper::SaveCelerHitsToFile()
         AnaMngr->FillNtupleDColumn(3, 5, hit.z);
         AnaMngr->FillNtupleDColumn(3, 6, hit.t);
         AnaMngr->FillNtupleDColumn(3, 7, hit.wavelength_nm);
+        AnaMngr->FillNtupleIColumn(3, 8, hit.track_id);
+        AnaMngr->FillNtupleIColumn(3, 9, hit.num_steps);
+        AnaMngr->FillNtupleDColumn(3, 10, hit.path_length);
         AnaMngr->AddNtupleRow(3);
     }
     ResetCelerHits();

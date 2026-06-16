@@ -81,6 +81,9 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     analysisManager->CreateNtupleDColumn("t");
     analysisManager->CreateNtupleDColumn("wavelength");
     analysisManager->CreateNtupleIColumn("ProcessID");
+    analysisManager->CreateNtupleIColumn("trackID");
+    analysisManager->CreateNtupleIColumn("numSteps");
+    analysisManager->CreateNtupleDColumn("stepLength");
     analysisManager->FinishNtuple();
 
     // Celeritas Hits
@@ -94,6 +97,10 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     analysisManager->CreateNtupleDColumn("t");
     analysisManager->CreateNtupleDColumn("wavelength");
     //  analysisManager->CreateNtupleIColumn("ProcessID");
+    analysisManager->CreateNtupleIColumn("trackID");
+    analysisManager->CreateNtupleIColumn("numSteps");
+    // analysisManager->CreateNtupleDColumn("stepLength");
+    analysisManager->CreateNtupleDColumn("pathLength");
     analysisManager->FinishNtuple();
 
     // PhotonInfo

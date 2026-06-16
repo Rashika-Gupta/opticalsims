@@ -17,6 +17,10 @@ struct CelerOpticalHit
     float x, y, z, t;
     float energy_mev;
     float wavelength_nm;
+
+    int track_id;
+    int num_steps;
+    float path_length;
 };
 
 class AnalysisManagerHelper
