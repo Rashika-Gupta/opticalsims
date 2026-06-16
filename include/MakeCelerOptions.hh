@@ -69,7 +69,7 @@ celeritas::SetupOptions MakeCelerOptions()
 
   opts.geometry_output_file = "/Users/r1i/Desktop/OpticalSims-upstream/dune-rice-celer.gdml";
   // No Geant4 SD callback from Celeritas — hits come back via optical callback
-  opts.sd.enabled = false;
+  opts.sd.enabled = true;
 
   // Configure optical physics
   opts.optical = []
@@ -108,6 +108,10 @@ celeritas::SetupOptions MakeCelerOptions()
       h.y = static_cast<float>(hit.position[1]);
       h.z = static_cast<float>(hit.position[2]);
       h.t = static_cast<float>(hit.time);
+      h.track_id = hit.track_slot.unchecked_get();
+      h.num_steps = hit.num_steps;
+      h.path_length = hit.path_length;
+
       h.energy_mev = static_cast<float>(value_as<MevEnergy>(hit.energy));
       // Convert MeV to nm: E[eV] = 1239.8 / lambda[nm]
       float energy_ev = h.energy_mev * 1e6f;
