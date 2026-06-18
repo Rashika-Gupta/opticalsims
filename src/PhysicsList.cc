@@ -17,9 +17,34 @@
 #include "G4IonPhysics.hh"
 #include "G4StoppingPhysics.hh"
 #include "G4EmExtraPhysics.hh"
-PhysicsList::PhysicsList() :FTFP_BERT_HP() {
-
+#include "G4Electron.hh"
+#include "G4Positron.hh"
+PhysicsList::PhysicsList() : FTFP_BERT_HP()
+{
 }
 PhysicsList::~PhysicsList() noexcept {};
+void PhysicsList::ConstructProcess()
+{
+    FTFP_BERT_HP::ConstructProcess();
 
+    for (G4ParticleDefinition *particle :
+         {static_cast<G4ParticleDefinition *>(G4Electron::Definition()),
+          static_cast<G4ParticleDefinition *>(G4Positron::Definition())})
+    {
+        auto *pm = particle->GetProcessManager();
 
+        for (int i = pm->GetProcessListLength() - 1; i >= 0; --i)
+        {
+            auto *proc = (*pm->GetProcessList())[i];
+
+            if (proc->GetProcessName() == "CoulombScat")
+            {
+                G4cout << "Removing CoulombScat from "
+                       << particle->GetParticleName()
+                       << G4endl;
+
+                pm->RemoveProcess(proc);
+            }
+        }
+    }
+}

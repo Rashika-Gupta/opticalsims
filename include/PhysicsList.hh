@@ -7,11 +7,12 @@
 
 #include "G4VModularPhysicsList.hh"
 #include "FTFP_BERT_HP.hh"
-class PhysicsList : public FTFP_BERT_HP {
+class PhysicsList : public FTFP_BERT_HP
+{
 public:
     PhysicsList();
     virtual ~PhysicsList();
+    void ConstructProcess() override;
 };
 
-
-#endif //G4_PHYSICSLIST_HH
+#endif // G4_PHYSICSLIST_HH
