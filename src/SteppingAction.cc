@@ -26,6 +26,49 @@ void SteppingAction::UserSteppingAction(const G4Step *step)
         return;
     }
 
+    // Record optical photon creation time (before transport)
+    if (aTrack->GetCurrentStepNumber() == 1)
+    {
+        auto *vol = step->GetPreStepPoint()->GetPhysicalVolume();
+
+        if (vol && vol->GetLogicalVolume() && vol->GetLogicalVolume()->GetMaterial() && vol->GetLogicalVolume()->GetMaterial()->GetName() == "LAr")
+        {
+            G4ThreeVector pos = aTrack->GetPosition();
+            G4ThreeVector dir = aTrack->GetMomentumDirection();
+            G4ThreeVector pol = aTrack->GetPolarization();
+
+            G4double time = aTrack->GetGlobalTime();
+            G4double wavelength = EtoWavelength(aTrack->GetTotalEnergy() / CLHEP::eV);
+
+            G4int track_id = aTrack->GetTrackID();
+
+            G4int procid = -1;
+            if (auto const *proc = aTrack->GetCreatorProcess())
+            {
+                if (proc->GetProcessName() == "Scintillation")
+                    procid = 0;
+                else if (proc->GetProcessName() == "Cerenkov")
+                    procid = 1;
+            }
+
+            ArapucaHit hit(
+                procid,
+                0, // dummy detector id
+                "LAr",
+                wavelength,
+                time,
+                pos,
+                dir,
+                pol,
+                track_id,
+                aTrack->GetCurrentStepNumber(),
+                step->GetStepLength());
+            anaHelper->AddG4Hits(hit);
+        }
+
+        return;
+    }
+
     G4OpBoundaryProcess *boundary = nullptr;
 
     if (!boundary)
@@ -85,7 +128,7 @@ void SteppingAction::UserSteppingAction(const G4Step *step)
     {
         G4String PredetectName = step->GetPreStepPoint()->GetPhysicalVolume()->GetName();
         G4String PostdetectName = step->GetPostStepPoint()->GetPhysicalVolume()->GetName();
-        // std::cout << "Pre Detector Name " << PredetectName << std::endl;
+        std::cout << "Pre Detector Name " << PredetectName << std::endl;
         // std::cout << "Post Detector Name " << PostdetectName << std::endl;
 
         G4ThreeVector PPosition = aTrack->GetPosition();

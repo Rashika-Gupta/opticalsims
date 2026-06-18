@@ -69,7 +69,7 @@ celeritas::SetupOptions MakeCelerOptions()
 
   opts.geometry_output_file = "/Users/r1i/Desktop/OpticalSims-upstream/dune-rice-celer.gdml";
   // No Geant4 SD callback from Celeritas — hits come back via optical callback
-  opts.sd.enabled = true;
+  opts.sd.enabled = false;
 
   // Configure optical physics
   opts.optical = []
@@ -120,9 +120,9 @@ celeritas::SetupOptions MakeCelerOptions()
     }
 
     AnalysisManagerHelper::getInstance()->AddCelerHits(celer_hits);
-    total_celer_optical += hits.size();
-    CELER_LOG(debug) << "[Celeritas] optical hits this flush: " << hits.size()
-                     << " | total: " << total_celer_optical << "\n";
+    // total_celer_optical += hits.size();
+    // CELER_LOG(debug) << "[Celeritas] optical hits this flush: " << hits.size()
+    //                 << " | total: " << total_celer_optical << "\n";
   };
 
   return opts;
