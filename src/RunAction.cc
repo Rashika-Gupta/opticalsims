@@ -4,6 +4,7 @@
 #include "RunAction.hh"
 #include "G4Run.hh"
 #include "G4AnalysisManager.hh"
+#include "G4Material.hh"
 #include <fstream>
 #include <G4Run.hh>
 #include <G4Threading.hh>
@@ -33,6 +34,7 @@ RunAction::~RunAction()
 
 void RunAction::BeginOfRunAction(const G4Run *run)
 {
+
     // Offload to Celeritas if enabled
     celeritas::TrackingManagerIntegration::Instance().BeginOfRunAction(run);
 
@@ -131,33 +133,33 @@ void RunAction::EndOfRunAction(const G4Run *run)
 
         if (tmi.GetMode() == Mode::enabled)
         {
-            auto &integration = celeritas::detail::IntegrationSingleton::instance();
-            auto &local = dynamic_cast<celeritas::LocalTransporter &>(
-                integration.local_offload());
-
-            auto const &optical_collector = integration.shared_params().problem_loaded().optical_collector;
-
-            if (optical_collector)
-            {
-                // run->GetNumberOfEvent();
-                G4cout << "nEvents: " << run->GetNumberOfEvent() << "\n";
-
-                auto const &accum = optical_collector->optical_state(local.GetState()).accum();
-
-                G4cout << "Celeritas generated " << accum.steps
-                       << " optical photons" << "\n";
-            }
-            auto counter_stats = optical_collector->exchange_counters(local.GetState().aux());
-            size_t total_photons_generated = 0;
-            for (auto const &gen_counters : counter_stats.generators)
-            {
-                total_photons_generated += gen_counters.num_generated;
-            }
-            G4cout << "Celeritas generated " << total_photons_generated
-                   << " optical photons (generated)\n";
-            // Write Celeritas diagnostics to ROOT file
-            std::ostringstream diagnostics;
-            tmi.GetParams().output_reg()->output(&diagnostics);
+            // auto &integration = celeritas::detail::IntegrationSingleton::instance();
+            // auto &local = dynamic_cast<celeritas::LocalTransporter &>(
+            //     integration.local_offload());
+            //
+            // auto const &optical_collector = integration.shared_params().problem_loaded().optical_collector;
+            //
+            // if (optical_collector)
+            //{
+            //    // run->GetNumberOfEvent();
+            //    G4cout << "nEvents: " << run->GetNumberOfEvent() << "\n";
+            //
+            //    auto const &accum = optical_collector->optical_state(local.GetState()).accum();
+            //
+            //    G4cout << "Celeritas generated " << accum.steps
+            //           << " optical photons" << "\n";
+            //}
+            // auto counter_stats = optical_collector->exchange_counters(local.GetState().aux());
+            // size_t total_photons_generated = 0;
+            // for (auto const &gen_counters : counter_stats.generators)
+            //{
+            //    total_photons_generated += gen_counters.num_generated;
+            //}
+            // G4cout << "Celeritas generated " << total_photons_generated
+            //       << " optical photons (generated)\n";
+            //// Write Celeritas diagnostics to ROOT file
+            // std::ostringstream diagnostics;
+            // tmi.GetParams().output_reg()->output(&diagnostics);
         }
     }
     // Write and Close File

@@ -80,18 +80,18 @@ void DetectorConstruction::ConstructSDandField()
   G4OpticalSurface *ArapucaSurface = new G4OpticalSurface("ArapucaSurface", unified, polished, dielectric_metal);
 
   // Making sure we have the material
-  G4Material *ArapucaWindowMaterial = G4Material::GetMaterial("ArapucaWindowProperties");
-  G4MaterialPropertiesTable *mpt = nullptr;
-  if (ArapucaWindowMaterial)
-  {
-    mpt = ArapucaWindowMaterial->GetMaterialPropertiesTable();
-    ArapucaSurface->SetMaterialPropertiesTable(mpt);
-  }
-  else
-  {
-    G4cout << "Error, No Material " << G4endl;
-    assert(false);
-  }
+  // G4Material *ArapucaWindowMaterial = G4Material::GetMaterial("ArapucaWindowProperties");
+  // G4MaterialPropertiesTable *mpt = nullptr;
+  // if (ArapucaWindowMaterial)
+  //{
+  //  mpt = ArapucaWindowMaterial->GetMaterialPropertiesTable();
+  //  ArapucaSurface->SetMaterialPropertiesTable(mpt);
+  //}
+  // else
+  //{
+  //  G4cout << "Error, No Material " << G4endl;
+  //  assert(false);
+  //}
 
   // G4VPhysicalVolume *vol1,*vol2;
   //  UserLimits
@@ -224,22 +224,11 @@ void DetectorConstruction::ConstructSDandField()
   auto *sd = new GdmlSensitiveDetector("LArDetector");
   sdman->AddNewDetector(sd);
 
-  // for (auto const &iter : *auxmap)
-  //{
-  //   auto *lv = iter.first;
-  //
-  //  if (lv->GetName() == "LAr")
-  //  {
-  //    G4cout << "Attaching SD to LAr volume\n";
-  //    lv->SetSensitiveDetector(sd);
-  //  }
-  //}
-
   for (auto *lv : *G4LogicalVolumeStore::GetInstance())
   {
     auto *mat = lv->GetMaterial();
 
-    if (mat && mat->GetName() == "LAr")
+    if (mat && mat->GetName() == "lAr")
     {
       G4cout << "Attach SD -> "
              << lv->GetName()

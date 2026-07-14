@@ -34,7 +34,8 @@
 #define _G04PRIMARYGENERATORACTION_H_
 
 #include "G4VUserPrimaryGeneratorAction.hh"
-#include "G4GeneralParticleSource.hh"
+// #include "G4GeneralParticleSource.hh"
+#include "G4ParticleGun.hh"
 #include "G4GenericMessenger.hh"
 #include "globals.hh"
 
@@ -46,30 +47,30 @@
 #include "Opticks/OpticksHitHandler.hh"
 #endif
 class G4Event;
-class G4GeneralParticleSource;
+// class G4GeneralParticleSource;
 
 /// Primary generator action for GDML sensitive detector example
 
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
-  public:
+public:
+  PrimaryGeneratorAction();
+  ~PrimaryGeneratorAction();
+  void GeneratePrimaries(G4Event *anEvent) override;
+#ifdef With_Opticks
+  void setPhotons(std::vector<sphoton> sphotons);
+#endif
+private:
+  // G4GeneralParticleSource *fParticleGun;
+  G4ParticleGun *fParticleGun;
 
-    PrimaryGeneratorAction();
-   ~PrimaryGeneratorAction();
-    void GeneratePrimaries(G4Event* anEvent) override;
-   #ifdef With_Opticks
-    void setPhotons(std::vector<sphoton> sphotons);
-   #endif
-  private:
-
-    G4GeneralParticleSource* fParticleGun;
-    G4GenericMessenger * fmsg ;
-    G4String fFileName;
-    G4String finitParticleType;
-    G4int fAmount;
-    #ifdef With_Opticks
-    std::vector<sphoton> sphotons;
-    #endif
+  G4GenericMessenger *fmsg;
+  G4String fFileName;
+  G4String finitParticleType;
+  G4int fAmount;
+#ifdef With_Opticks
+  std::vector<sphoton> sphotons;
+#endif
 };
 
 #endif

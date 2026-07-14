@@ -53,7 +53,7 @@
 #include "G4OpticalPhysics.hh"
 // macro loader
 #include "include/config.h"
-
+#include "Randomize.hh"
 // Opticks related header files
 #include "G4OpticalPhysicsOpticks.hh"
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     std::cout<<"Device "<<device<< std::endl;
   */
 #endif
-
+  G4Random::setTheSeed(12345);
   G4cout << G4endl;
   G4cout << " Usage : " << G4endl;
   G4cout << "Interactive Mode : ./gdml_det i ../GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml macros/g04.mac"
@@ -123,6 +123,12 @@ int main(int argc, char **argv)
   auto opticalPhysics = new G4OpticalPhysics(true);
   auto opticalParams = G4OpticalParameters::Instance();
   opticalParams->SetProcessActivation("Cerenkov", false);
+  // opticalParams->SetProcessActivation("OpAbsorption", false);
+  opticalParams->SetProcessActivation("OpRayleigh", false);
+  opticalParams->SetProcessActivation("OpMieHG", false);
+  opticalParams->SetProcessActivation("OpWLS", false);
+  opticalParams->SetProcessActivation("OpWLS2", false);
+  // opticalParams->SetProcessActivation("OpBoundary", false);
   physics_list->RegisterPhysics(opticalPhysics);
 #endif
 
@@ -136,6 +142,14 @@ int main(int argc, char **argv)
   runManager->SetUserInitialization(new ActionInitialization());
   runManager->SetNumberOfThreads(1);
   runManager->Initialize();
+  auto *pm = G4OpticalPhoton::Definition()->GetProcessManager();
+  auto *pv = pm->GetProcessList();
+
+  CELER_LOG(debug) << "\nOptical photon processes:\n";
+  for (size_t i = 0; i < pv->size(); ++i)
+  {
+    CELER_LOG(debug) << "  " << (*pv)[i]->GetProcessName() << "\n";
+  }
 
   // Initialize visualization
   G4VisManager *visManager = new G4VisExecutive;

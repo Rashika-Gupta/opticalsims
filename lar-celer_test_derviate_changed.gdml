@@ -2,182 +2,182 @@
 <gdml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://cern.ch/service-spi/app/releases/GDML/schema/gdml.xsd">
 
   <define>
-    <matrix coldim="2" name="RINDEX0xb54c02680" values="1.8785e-06 1.22212 1.894e-06 1.2222 1.9101e-06 1.22228 1.9261e-06 1.22236 1.9424e-06 1.22244 1.959e-06 1.22252 1.9762e-06 1.22259 1.9933e-06 1.22267 2.0108e-06 1.22275 2.0289e-06 1.22283 2.047e-06 1.22291 2.0654e-06 1.22299 2.0845e-06 1.22307 2.1036e-06 1.22315 2.123e-06 1.22324 2.1428e-06 1.22332 2.1634e-06 1.22341 2.184e-06 1.22349 2.2049e-06 1.22358 2.2267e-06 1.22367 2.2485e-06 1.22376 2.2708e-06 1.22385 2.2939e-06 1.22395 2.317e-06 1.22404 2.3406e-06 1.22414 2.3648e-06 1.22424 2.3898e-06 1.22435 2.415e-06 1.22445 2.4406e-06 1.22456 2.4673e-06 1.22467 2.4942e-06 1.22479 2.5215e-06 1.2249 2.5501e-06 1.22503 2.5787e-06 1.22515 2.608e-06 1.22528 2.638e-06 1.22541 2.6692e-06 1.22555 2.7006e-06 1.22569 2.7327e-06 1.22584 2.7663e-06 1.22599 2.8e-06 1.22615 2.8346e-06 1.22631 2.8707e-06 1.22648 2.907e-06 1.22665 2.9443e-06 1.22683 2.9825e-06 1.22702 3.0225e-06 1.22722 3.0629e-06 1.22742 3.1043e-06 1.22764 3.1476e-06 1.22786 3.1914e-06 1.22809 3.2363e-06 1.22833 3.2835e-06 1.22859 3.3311e-06 1.22886 3.3802e-06 1.22913 3.4307e-06 1.22942 3.4837e-06 1.22974 3.5374e-06 1.23006 3.5927e-06 1.2304 3.6509e-06 1.23076 3.7099e-06 1.23113 3.7708e-06 1.23153 3.835e-06 1.23196 3.9001e-06 1.2324 3.9675e-06 1.23287 4.0373e-06 1.23337 4.1109e-06 1.23392 4.1858e-06 1.23448 4.2636e-06 1.23509 4.3457e-06 1.23575 4.4296e-06 1.23644 4.5167e-06 1.23718 4.6091e-06 1.23799 4.7035e-06 1.23885 4.8019e-06 1.23978 4.9044e-06 1.24079 5.0135e-06 1.2419 5.1254e-06 1.24308 5.2425e-06 1.24438 5.3673e-06 1.24582 5.4958e-06 1.24738 5.6305e-06 1.2491 5.7748e-06 1.25105 5.9238e-06 1.25317 6.0806e-06 1.25554 6.2461e-06 1.25821 6.4241e-06 1.26129 6.609e-06 1.26474 6.8048e-06 1.2687 7.0166e-06 1.27339 7.2378e-06 1.27878 7.4734e-06 1.28517 7.7297e-06 1.29301 7.999e-06 1.30244 8.2877e-06 1.31422 8.5981e-06 1.32932 8.939e-06 1.34977 9.3011e-06 1.37767 9.6938e-06 1.41888 1.0129e-05 1.48738 1.0597e-05 1.61675"/>
-    <matrix coldim="2" name="GROUPVEL0xb54c02760" values="1.8785e-06 243.4 1.88625e-06 243.392 1.90205e-06 243.408 1.9181e-06 243.406 1.93425e-06 243.413 1.9507e-06 243.416 1.9676e-06 243.414 1.98475e-06 243.401 2.00205e-06 243.405 2.01985e-06 243.391 2.03795e-06 243.38 2.0562e-06 243.364 2.07495e-06 243.349 2.09405e-06 243.33 2.1133e-06 243.305 2.1329e-06 243.286 2.1531e-06 243.265 2.1737e-06 243.237 2.19445e-06 243.2 2.2158e-06 243.177 2.2376e-06 243.142 2.25965e-06 243.113 2.28235e-06 243.07 2.30545e-06 243.027 2.3288e-06 242.988 2.3527e-06 242.954 2.3773e-06 242.895 2.4024e-06 242.857 2.4278e-06 242.796 2.45395e-06 242.747 2.48075e-06 242.7 2.50785e-06 242.628 2.5358e-06 242.579 2.5644e-06 242.507 2.59335e-06 242.444 2.623e-06 242.377 2.6536e-06 242.299 2.6849e-06 242.226 2.71665e-06 242.143 2.7495e-06 242.068 2.78315e-06 241.973 2.8173e-06 241.888 2.85265e-06 241.79 2.88885e-06 241.687 2.92565e-06 241.589 2.9634e-06 241.475 3.0025e-06 241.365 3.0427e-06 241.25 3.0836e-06 241.119 3.12595e-06 240.985 3.1695e-06 240.853 3.21385e-06 240.699 3.2599e-06 240.556 3.3073e-06 240.388 3.35565e-06 240.228 3.40545e-06 240.046 3.4572e-06 239.857 3.51055e-06 239.661 3.56505e-06 239.447 3.6218e-06 239.23 3.6804e-06 238.994 3.74035e-06 238.744 3.8029e-06 238.485 3.86755e-06 238.197 3.9338e-06 237.904 4.0024e-06 237.59 4.0741e-06 237.245 4.14835e-06 236.879 4.2247e-06 236.502 4.30465e-06 236.071 4.38765e-06 235.633 4.47315e-06 235.146 4.5629e-06 234.63 4.6563e-06 234.06 4.7527e-06 233.457 4.85315e-06 232.789 4.95895e-06 232.072 5.06945e-06 231.276 5.18395e-06 230.422 5.3049e-06 229.458 5.43155e-06 228.407 5.56315e-06 227.238 5.70265e-06 225.947 5.8493e-06 224.485 6.0022e-06 222.854 6.16335e-06 221.038 6.3351e-06 218.927 6.51655e-06 216.52 6.7069e-06 213.767 6.9107e-06 210.553 7.1272e-06 206.783 7.3556e-06 202.36 7.60155e-06 197.026 7.86435e-06 190.57 8.14335e-06 182.735 8.4429e-06 173.045 8.76855e-06 160.718 9.12005e-06 145.07 9.49745e-06 125.193 9.9114e-06 99.4981 1.0597e-05 66.9049"/>
-    <matrix coldim="2" name="RAYLEIGH0xb54c02e60" values="1.55e-06 321429 1.7714e-06 192857 2.102e-06 109286 2.255e-06 64285.7 2.531e-06 39857.1 2.884e-06 27000 3.024e-06 19285.7 4.133e-06 4885.71 6.2e-06 546.429 1.033e-05 546.429 1.55e-05 546.429"/>
-    <matrix coldim="2" name="WLSCOMPONENT0xb54c03020" values="1.3778e-06 0.1 1e-05 0.9"/>
-    <matrix coldim="2" name="WLSABSLENGTH0xb54c03100" values="1.3778e-06 1 1.55e-05 0.1"/>
-    <matrix coldim="2" name="WLSCOMPONENT20xb54c031e0" values="1.771e-06 0.3 2.484e-06 0.8"/>
-    <matrix coldim="2" name="WLSABSLENGTH20xb54c032c0" values="1.3778e-06 1 1.55e-05 0.1"/>
-    <matrix coldim="2" name="ABSLENGTH0xb54c02f40" values="1.3778e-06 864.473 1.55e-05 0.00296154"/>
-    <matrix coldim="2" name="PROTONSCINTILLATIONYIELD0xb54c02920" values="1e-06 2500 6 4200"/>
-    <matrix coldim="2" name="DEUTERONSCINTILLATIONYIELD0xb54c02a00" values="1e-06 1200 6 3000"/>
-    <matrix coldim="2" name="TRITONSCINTILLATIONYIELD0xb54c02ae0" values="1e-06 1500 6 3500"/>
-    <matrix coldim="2" name="ALPHASCINTILLATIONYIELD0xb54c02bc0" values="1e-06 1700 6 3700"/>
-    <matrix coldim="2" name="IONSCINTILLATIONYIELD0xb54c02ca0" values="1e-06 2000 6 4000"/>
-    <matrix coldim="2" name="ELECTRONSCINTILLATIONYIELD0xb54c02d80" values="1e-06 3750 6 5000"/>
-    <matrix coldim="2" name="SCINTILLATIONCOMPONENT30xb54c02840" values="0.0001 0.074336 0.000104 0.198065 0.000108 0.507043 0.000112 1.24712 0.000116 2.94715 0.00012 6.69151 0.000124 14.5973 0.000128 30.5951 0.000132 61.611 0.000136 119.204 0.00014 221.592 0.000144 395.773 0.000148 679.148 0.000152 1119.73 0.000156 1773.73 0.00016 2699.55 0.000164 3947.51 0.000168 5546.04 0.000172 7486.37 0.000176 9709.3 0.00018 12098.5 0.000184 14484.6 0.000188 16661.2 0.000192 18413.5 0.000196 19552.1 0.0002 19947.1 0.000204 19552.1 0.000208 18413.5 0.000212 16661.2 0.000216 14484.6 0.00022 12098.5 0.000224 9709.3 0.000228 7486.37 0.000232 5546.04 0.000236 3947.51 0.00024 2699.55 0.000244 1773.73 0.000248 1119.73 0.000252 679.148 0.000256 395.773 0.00026 221.592 0.000264 119.204 0.000268 61.611 0.000272 30.5951 0.000276 14.5973 0.00028 6.69151 0.000284 2.94715 0.000288 1.24712 0.000292 0.507043 0.000296 0.198065 0.0003 0.074336"/>
-    <matrix coldim="1" name="ISOTHERMAL_COMPRESSIBILITY0xb54c48b60" values="3.95306e-05"/>
-    <matrix coldim="1" name="WLSMEANNUMBERPHOTONS0xb54c48b60" values="0.456"/>
-    <matrix coldim="1" name="WLSTIMECONSTANT0xb54c48b60" values="6"/>
-    <matrix coldim="1" name="WLSMEANNUMBERPHOTONS20xb54c48b60" values="0.123"/>
-    <matrix coldim="1" name="WLSTIMECONSTANT20xb54c48b60" values="6"/>
-    <matrix coldim="1" name="SCINTILLATIONYIELD0xb54c48b60" values="5000"/>
-    <matrix coldim="1" name="RESOLUTIONSCALE0xb54c48b60" values="1"/>
-    <matrix coldim="1" name="SCINTILLATIONTIMECONSTANT10xb54c48b60" values="6"/>
-    <matrix coldim="1" name="SCINTILLATIONTIMECONSTANT20xb54c48b60" values="1500"/>
-    <matrix coldim="1" name="SCINTILLATIONTIMECONSTANT30xb54c48b60" values="3000"/>
-    <matrix coldim="1" name="SCINTILLATIONRISETIME10xb54c48b60" values="10"/>
-    <matrix coldim="1" name="SCINTILLATIONRISETIME20xb54c48b60" values="10"/>
-    <matrix coldim="1" name="SCINTILLATIONRISETIME30xb54c48b60" values="10"/>
-    <matrix coldim="1" name="SCINTILLATIONYIELD10xb54c48b60" values="3"/>
-    <matrix coldim="1" name="SCINTILLATIONYIELD20xb54c48b60" values="1"/>
-    <matrix coldim="1" name="SCINTILLATIONYIELD30xb54c48b60" values="1"/>
-    <matrix coldim="1" name="ELECTRONSCINTILLATIONYIELD10xb54c48b60" values="4000"/>
-    <matrix coldim="1" name="ELECTRONSCINTILLATIONTIMECONSTANT10xb54c48b60" values="5"/>
-    <matrix coldim="1" name="CELER_SCINTILLATIONLAMBDAMEAN10xb54c48b60" values="0.000128"/>
-    <matrix coldim="1" name="CELER_SCINTILLATIONLAMBDAMEAN20xb54c48b60" values="0.000128"/>
-    <matrix coldim="1" name="CELER_SCINTILLATIONLAMBDASIGMA10xb54c48b60" values="1e-05"/>
-    <matrix coldim="1" name="CELER_SCINTILLATIONLAMBDASIGMA20xb54c48b60" values="1e-05"/>
-    <matrix coldim="1" name="ELECTRONSCINTILLATIONRISETIME10xb54c48b60" values="15"/>
+    <matrix coldim="2" name="RINDEX0xc79139500" values="1.8785e-06 1.22212 1.894e-06 1.2222 1.9101e-06 1.22228 1.9261e-06 1.22236 1.9424e-06 1.22244 1.959e-06 1.22252 1.9762e-06 1.22259 1.9933e-06 1.22267 2.0108e-06 1.22275 2.0289e-06 1.22283 2.047e-06 1.22291 2.0654e-06 1.22299 2.0845e-06 1.22307 2.1036e-06 1.22315 2.123e-06 1.22324 2.1428e-06 1.22332 2.1634e-06 1.22341 2.184e-06 1.22349 2.2049e-06 1.22358 2.2267e-06 1.22367 2.2485e-06 1.22376 2.2708e-06 1.22385 2.2939e-06 1.22395 2.317e-06 1.22404 2.3406e-06 1.22414 2.3648e-06 1.22424 2.3898e-06 1.22435 2.415e-06 1.22445 2.4406e-06 1.22456 2.4673e-06 1.22467 2.4942e-06 1.22479 2.5215e-06 1.2249 2.5501e-06 1.22503 2.5787e-06 1.22515 2.608e-06 1.22528 2.638e-06 1.22541 2.6692e-06 1.22555 2.7006e-06 1.22569 2.7327e-06 1.22584 2.7663e-06 1.22599 2.8e-06 1.22615 2.8346e-06 1.22631 2.8707e-06 1.22648 2.907e-06 1.22665 2.9443e-06 1.22683 2.9825e-06 1.22702 3.0225e-06 1.22722 3.0629e-06 1.22742 3.1043e-06 1.22764 3.1476e-06 1.22786 3.1914e-06 1.22809 3.2363e-06 1.22833 3.2835e-06 1.22859 3.3311e-06 1.22886 3.3802e-06 1.22913 3.4307e-06 1.22942 3.4837e-06 1.22974 3.5374e-06 1.23006 3.5927e-06 1.2304 3.6509e-06 1.23076 3.7099e-06 1.23113 3.7708e-06 1.23153 3.835e-06 1.23196 3.9001e-06 1.2324 3.9675e-06 1.23287 4.0373e-06 1.23337 4.1109e-06 1.23392 4.1858e-06 1.23448 4.2636e-06 1.23509 4.3457e-06 1.23575 4.4296e-06 1.23644 4.5167e-06 1.23718 4.6091e-06 1.23799 4.7035e-06 1.23885 4.8019e-06 1.23978 4.9044e-06 1.24079 5.0135e-06 1.2419 5.1254e-06 1.24308 5.2425e-06 1.24438 5.3673e-06 1.24582 5.4958e-06 1.24738 5.6305e-06 1.2491 5.7748e-06 1.25105 5.9238e-06 1.25317 6.0806e-06 1.25554 6.2461e-06 1.25821 6.4241e-06 1.26129 6.609e-06 1.26474 6.8048e-06 1.2687 7.0166e-06 1.27339 7.2378e-06 1.27878 7.4734e-06 1.28517 7.7297e-06 1.29301 7.999e-06 1.30244 8.2877e-06 1.31422 8.5981e-06 1.32932 8.939e-06 1.34977 9.3011e-06 1.37767 9.6938e-06 1.41888 1.0129e-05 1.48738 1.0597e-05 1.61675"/>
+    <matrix coldim="2" name="GROUPVEL0xc78c95dc0" values="1.8785e-06 243.4 1.88625e-06 243.392 1.90205e-06 243.408 1.9181e-06 243.406 1.93425e-06 243.413 1.9507e-06 243.416 1.9676e-06 243.414 1.98475e-06 243.401 2.00205e-06 243.405 2.01985e-06 243.391 2.03795e-06 243.38 2.0562e-06 243.364 2.07495e-06 243.349 2.09405e-06 243.33 2.1133e-06 243.305 2.1329e-06 243.286 2.1531e-06 243.265 2.1737e-06 243.237 2.19445e-06 243.2 2.2158e-06 243.177 2.2376e-06 243.142 2.25965e-06 243.113 2.28235e-06 243.07 2.30545e-06 243.027 2.3288e-06 242.988 2.3527e-06 242.954 2.3773e-06 242.895 2.4024e-06 242.857 2.4278e-06 242.796 2.45395e-06 242.747 2.48075e-06 242.7 2.50785e-06 242.628 2.5358e-06 242.579 2.5644e-06 242.507 2.59335e-06 242.444 2.623e-06 242.377 2.6536e-06 242.299 2.6849e-06 242.226 2.71665e-06 242.143 2.7495e-06 242.068 2.78315e-06 241.973 2.8173e-06 241.888 2.85265e-06 241.79 2.88885e-06 241.687 2.92565e-06 241.589 2.9634e-06 241.475 3.0025e-06 241.365 3.0427e-06 241.25 3.0836e-06 241.119 3.12595e-06 240.985 3.1695e-06 240.853 3.21385e-06 240.699 3.2599e-06 240.556 3.3073e-06 240.388 3.35565e-06 240.228 3.40545e-06 240.046 3.4572e-06 239.857 3.51055e-06 239.661 3.56505e-06 239.447 3.6218e-06 239.23 3.6804e-06 238.994 3.74035e-06 238.744 3.8029e-06 238.485 3.86755e-06 238.197 3.9338e-06 237.904 4.0024e-06 237.59 4.0741e-06 237.245 4.14835e-06 236.879 4.2247e-06 236.502 4.30465e-06 236.071 4.38765e-06 235.633 4.47315e-06 235.146 4.5629e-06 234.63 4.6563e-06 234.06 4.7527e-06 233.457 4.85315e-06 232.789 4.95895e-06 232.072 5.06945e-06 231.276 5.18395e-06 230.422 5.3049e-06 229.458 5.43155e-06 228.407 5.56315e-06 227.238 5.70265e-06 225.947 5.8493e-06 224.485 6.0022e-06 222.854 6.16335e-06 221.038 6.3351e-06 218.927 6.51655e-06 216.52 6.7069e-06 213.767 6.9107e-06 210.553 7.1272e-06 206.783 7.3556e-06 202.36 7.60155e-06 197.026 7.86435e-06 190.57 8.14335e-06 182.735 8.4429e-06 173.045 8.76855e-06 160.718 9.12005e-06 145.07 9.49745e-06 125.193 9.9114e-06 99.4981 1.0597e-05 66.9049"/>
+    <matrix coldim="2" name="RAYLEIGH0xc79139c00" values="1.55e-06 321429 1.7714e-06 192857 2.102e-06 109286 2.255e-06 64285.7 2.531e-06 39857.1 2.884e-06 27000 3.024e-06 19285.7 4.133e-06 4885.71 6.2e-06 546.429 1.033e-05 546.429 1.55e-05 546.429"/>
+    <matrix coldim="2" name="WLSCOMPONENT0xc79139dc0" values="1.3778e-06 0.1 1e-05 0.9"/>
+    <matrix coldim="2" name="WLSABSLENGTH0xc79139ea0" values="1.3778e-06 1 1.55e-05 0.1"/>
+    <matrix coldim="2" name="WLSCOMPONENT20xc79139f80" values="1.771e-06 0.3 2.484e-06 0.8"/>
+    <matrix coldim="2" name="WLSABSLENGTH20xc7913a060" values="1.3778e-06 1 1.55e-05 0.1"/>
+    <matrix coldim="2" name="ABSLENGTH0xc79139ce0" values="1.3778e-06 864.473 1.55e-05 0.00296154"/>
+    <matrix coldim="2" name="PROTONSCINTILLATIONYIELD0xc791396c0" values="1e-06 2500 6 4200"/>
+    <matrix coldim="2" name="DEUTERONSCINTILLATIONYIELD0xc791397a0" values="1e-06 1200 6 3000"/>
+    <matrix coldim="2" name="TRITONSCINTILLATIONYIELD0xc79139880" values="1e-06 1500 6 3500"/>
+    <matrix coldim="2" name="ALPHASCINTILLATIONYIELD0xc79139960" values="1e-06 1700 6 3700"/>
+    <matrix coldim="2" name="IONSCINTILLATIONYIELD0xc79139a40" values="1e-06 2000 6 4000"/>
+    <matrix coldim="2" name="ELECTRONSCINTILLATIONYIELD0xc79139b20" values="1e-06 3750 6 5000"/>
+    <matrix coldim="2" name="SCINTILLATIONCOMPONENT30xc791395e0" values="0.0001 0.074336 0.000104 0.198065 0.000108 0.507043 0.000112 1.24712 0.000116 2.94715 0.00012 6.69151 0.000124 14.5973 0.000128 30.5951 0.000132 61.611 0.000136 119.204 0.00014 221.592 0.000144 395.773 0.000148 679.148 0.000152 1119.73 0.000156 1773.73 0.00016 2699.55 0.000164 3947.51 0.000168 5546.04 0.000172 7486.37 0.000176 9709.3 0.00018 12098.5 0.000184 14484.6 0.000188 16661.2 0.000192 18413.5 0.000196 19552.1 0.0002 19947.1 0.000204 19552.1 0.000208 18413.5 0.000212 16661.2 0.000216 14484.6 0.00022 12098.5 0.000224 9709.3 0.000228 7486.37 0.000232 5546.04 0.000236 3947.51 0.00024 2699.55 0.000244 1773.73 0.000248 1119.73 0.000252 679.148 0.000256 395.773 0.00026 221.592 0.000264 119.204 0.000268 61.611 0.000272 30.5951 0.000276 14.5973 0.00028 6.69151 0.000284 2.94715 0.000288 1.24712 0.000292 0.507043 0.000296 0.198065 0.0003 0.074336"/>
+    <matrix coldim="1" name="ISOTHERMAL_COMPRESSIBILITY0xc78dc0770" values="3.95306e-05"/>
+    <matrix coldim="1" name="WLSMEANNUMBERPHOTONS0xc78dc0770" values="0.456"/>
+    <matrix coldim="1" name="WLSTIMECONSTANT0xc78dc0770" values="6"/>
+    <matrix coldim="1" name="WLSMEANNUMBERPHOTONS20xc78dc0770" values="0.123"/>
+    <matrix coldim="1" name="WLSTIMECONSTANT20xc78dc0770" values="6"/>
+    <matrix coldim="1" name="SCINTILLATIONYIELD0xc78dc0770" values="5000"/>
+    <matrix coldim="1" name="RESOLUTIONSCALE0xc78dc0770" values="1"/>
+    <matrix coldim="1" name="SCINTILLATIONTIMECONSTANT10xc78dc0770" values="6"/>
+    <matrix coldim="1" name="SCINTILLATIONTIMECONSTANT20xc78dc0770" values="1500"/>
+    <matrix coldim="1" name="SCINTILLATIONTIMECONSTANT30xc78dc0770" values="3000"/>
+    <matrix coldim="1" name="SCINTILLATIONRISETIME10xc78dc0770" values="10"/>
+    <matrix coldim="1" name="SCINTILLATIONRISETIME20xc78dc0770" values="10"/>
+    <matrix coldim="1" name="SCINTILLATIONRISETIME30xc78dc0770" values="10"/>
+    <matrix coldim="1" name="SCINTILLATIONYIELD10xc78dc0770" values="3"/>
+    <matrix coldim="1" name="SCINTILLATIONYIELD20xc78dc0770" values="1"/>
+    <matrix coldim="1" name="SCINTILLATIONYIELD30xc78dc0770" values="1"/>
+    <matrix coldim="1" name="ELECTRONSCINTILLATIONYIELD10xc78dc0770" values="4000"/>
+    <matrix coldim="1" name="ELECTRONSCINTILLATIONTIMECONSTANT10xc78dc0770" values="5"/>
+    <matrix coldim="1" name="CELER_SCINTILLATIONLAMBDAMEAN10xc78dc0770" values="0.000128"/>
+    <matrix coldim="1" name="CELER_SCINTILLATIONLAMBDAMEAN20xc78dc0770" values="0.000128"/>
+    <matrix coldim="1" name="CELER_SCINTILLATIONLAMBDASIGMA10xc78dc0770" values="1e-05"/>
+    <matrix coldim="1" name="CELER_SCINTILLATIONLAMBDASIGMA20xc78dc0770" values="1e-05"/>
+    <matrix coldim="1" name="ELECTRONSCINTILLATIONRISETIME10xc78dc0770" values="15"/>
   </define>
 
   <materials>
-    <isotope N="36" Z="18" name="Ar360xb55035540">
+    <isotope N="36" Z="18" name="Ar360xc79174340">
       <atom unit="g/mole" value="35.9675"/>
     </isotope>
-    <isotope N="38" Z="18" name="Ar380xb55035580">
+    <isotope N="38" Z="18" name="Ar380xc79174380">
       <atom unit="g/mole" value="37.9627"/>
     </isotope>
-    <isotope N="40" Z="18" name="Ar400xb55035500">
+    <isotope N="40" Z="18" name="Ar400xc791742c0">
       <atom unit="g/mole" value="39.9624"/>
     </isotope>
-    <element name="Ar0xb55114c00">
-      <fraction n="0.003365" ref="Ar360xb55035540"/>
-      <fraction n="0.000632" ref="Ar380xb55035580"/>
-      <fraction n="0.996003" ref="Ar400xb55035500"/>
+    <element name="Ar0xc7914d5c0">
+      <fraction n="0.003365" ref="Ar360xc79174340"/>
+      <fraction n="0.000632" ref="Ar380xc79174380"/>
+      <fraction n="0.996003" ref="Ar400xc791742c0"/>
     </element>
-    <material name="lAr0xb551e0000" state="liquid">
-      <property name="RINDEX" ref="RINDEX0xb54c02680"/>
-      <property name="GROUPVEL" ref="GROUPVEL0xb54c02760"/>
-      <property name="RAYLEIGH" ref="RAYLEIGH0xb54c02e60"/>
-      <property name="WLSCOMPONENT" ref="WLSCOMPONENT0xb54c03020"/>
-      <property name="WLSABSLENGTH" ref="WLSABSLENGTH0xb54c03100"/>
-      <property name="WLSCOMPONENT2" ref="WLSCOMPONENT20xb54c031e0"/>
-      <property name="WLSABSLENGTH2" ref="WLSABSLENGTH20xb54c032c0"/>
-      <property name="ABSLENGTH" ref="ABSLENGTH0xb54c02f40"/>
-      <property name="PROTONSCINTILLATIONYIELD" ref="PROTONSCINTILLATIONYIELD0xb54c02920"/>
-      <property name="DEUTERONSCINTILLATIONYIELD" ref="DEUTERONSCINTILLATIONYIELD0xb54c02a00"/>
-      <property name="TRITONSCINTILLATIONYIELD" ref="TRITONSCINTILLATIONYIELD0xb54c02ae0"/>
-      <property name="ALPHASCINTILLATIONYIELD" ref="ALPHASCINTILLATIONYIELD0xb54c02bc0"/>
-      <property name="IONSCINTILLATIONYIELD" ref="IONSCINTILLATIONYIELD0xb54c02ca0"/>
-      <property name="ELECTRONSCINTILLATIONYIELD" ref="ELECTRONSCINTILLATIONYIELD0xb54c02d80"/>
-      <property name="SCINTILLATIONCOMPONENT3" ref="SCINTILLATIONCOMPONENT30xb54c02840"/>
-      <property name="ISOTHERMAL_COMPRESSIBILITY" ref="ISOTHERMAL_COMPRESSIBILITY0xb54c48b60"/>
-      <property name="WLSMEANNUMBERPHOTONS" ref="WLSMEANNUMBERPHOTONS0xb54c48b60"/>
-      <property name="WLSTIMECONSTANT" ref="WLSTIMECONSTANT0xb54c48b60"/>
-      <property name="WLSMEANNUMBERPHOTONS2" ref="WLSMEANNUMBERPHOTONS20xb54c48b60"/>
-      <property name="WLSTIMECONSTANT2" ref="WLSTIMECONSTANT20xb54c48b60"/>
-      <property name="SCINTILLATIONYIELD" ref="SCINTILLATIONYIELD0xb54c48b60"/>
-      <property name="RESOLUTIONSCALE" ref="RESOLUTIONSCALE0xb54c48b60"/>
-      <property name="SCINTILLATIONTIMECONSTANT1" ref="SCINTILLATIONTIMECONSTANT10xb54c48b60"/>
-      <property name="SCINTILLATIONTIMECONSTANT2" ref="SCINTILLATIONTIMECONSTANT20xb54c48b60"/>
-      <property name="SCINTILLATIONTIMECONSTANT3" ref="SCINTILLATIONTIMECONSTANT30xb54c48b60"/>
-      <property name="SCINTILLATIONRISETIME1" ref="SCINTILLATIONRISETIME10xb54c48b60"/>
-      <property name="SCINTILLATIONRISETIME2" ref="SCINTILLATIONRISETIME20xb54c48b60"/>
-      <property name="SCINTILLATIONRISETIME3" ref="SCINTILLATIONRISETIME30xb54c48b60"/>
-      <property name="SCINTILLATIONYIELD1" ref="SCINTILLATIONYIELD10xb54c48b60"/>
-      <property name="SCINTILLATIONYIELD2" ref="SCINTILLATIONYIELD20xb54c48b60"/>
-      <property name="SCINTILLATIONYIELD3" ref="SCINTILLATIONYIELD30xb54c48b60"/>
-      <property name="ELECTRONSCINTILLATIONYIELD1" ref="ELECTRONSCINTILLATIONYIELD10xb54c48b60"/>
-      <property name="ELECTRONSCINTILLATIONTIMECONSTANT1" ref="ELECTRONSCINTILLATIONTIMECONSTANT10xb54c48b60"/>
-      <property name="CELER_SCINTILLATIONLAMBDAMEAN1" ref="CELER_SCINTILLATIONLAMBDAMEAN10xb54c48b60"/>
-      <property name="CELER_SCINTILLATIONLAMBDAMEAN2" ref="CELER_SCINTILLATIONLAMBDAMEAN20xb54c48b60"/>
-      <property name="CELER_SCINTILLATIONLAMBDASIGMA1" ref="CELER_SCINTILLATIONLAMBDASIGMA10xb54c48b60"/>
-      <property name="CELER_SCINTILLATIONLAMBDASIGMA2" ref="CELER_SCINTILLATIONLAMBDASIGMA20xb54c48b60"/>
-      <property name="ELECTRONSCINTILLATIONRISETIME1" ref="ELECTRONSCINTILLATIONRISETIME10xb54c48b60"/>
+    <material name="lAr0xc791f03c0" state="liquid">
+      <property name="RINDEX" ref="RINDEX0xc79139500"/>
+      <property name="GROUPVEL" ref="GROUPVEL0xc78c95dc0"/>
+      <property name="RAYLEIGH" ref="RAYLEIGH0xc79139c00"/>
+      <property name="WLSCOMPONENT" ref="WLSCOMPONENT0xc79139dc0"/>
+      <property name="WLSABSLENGTH" ref="WLSABSLENGTH0xc79139ea0"/>
+      <property name="WLSCOMPONENT2" ref="WLSCOMPONENT20xc79139f80"/>
+      <property name="WLSABSLENGTH2" ref="WLSABSLENGTH20xc7913a060"/>
+      <property name="ABSLENGTH" ref="ABSLENGTH0xc79139ce0"/>
+      <property name="PROTONSCINTILLATIONYIELD" ref="PROTONSCINTILLATIONYIELD0xc791396c0"/>
+      <property name="DEUTERONSCINTILLATIONYIELD" ref="DEUTERONSCINTILLATIONYIELD0xc791397a0"/>
+      <property name="TRITONSCINTILLATIONYIELD" ref="TRITONSCINTILLATIONYIELD0xc79139880"/>
+      <property name="ALPHASCINTILLATIONYIELD" ref="ALPHASCINTILLATIONYIELD0xc79139960"/>
+      <property name="IONSCINTILLATIONYIELD" ref="IONSCINTILLATIONYIELD0xc79139a40"/>
+      <property name="ELECTRONSCINTILLATIONYIELD" ref="ELECTRONSCINTILLATIONYIELD0xc79139b20"/>
+      <property name="SCINTILLATIONCOMPONENT3" ref="SCINTILLATIONCOMPONENT30xc791395e0"/>
+      <property name="ISOTHERMAL_COMPRESSIBILITY" ref="ISOTHERMAL_COMPRESSIBILITY0xc78dc0770"/>
+      <property name="WLSMEANNUMBERPHOTONS" ref="WLSMEANNUMBERPHOTONS0xc78dc0770"/>
+      <property name="WLSTIMECONSTANT" ref="WLSTIMECONSTANT0xc78dc0770"/>
+      <property name="WLSMEANNUMBERPHOTONS2" ref="WLSMEANNUMBERPHOTONS20xc78dc0770"/>
+      <property name="WLSTIMECONSTANT2" ref="WLSTIMECONSTANT20xc78dc0770"/>
+      <property name="SCINTILLATIONYIELD" ref="SCINTILLATIONYIELD0xc78dc0770"/>
+      <property name="RESOLUTIONSCALE" ref="RESOLUTIONSCALE0xc78dc0770"/>
+      <property name="SCINTILLATIONTIMECONSTANT1" ref="SCINTILLATIONTIMECONSTANT10xc78dc0770"/>
+      <property name="SCINTILLATIONTIMECONSTANT2" ref="SCINTILLATIONTIMECONSTANT20xc78dc0770"/>
+      <property name="SCINTILLATIONTIMECONSTANT3" ref="SCINTILLATIONTIMECONSTANT30xc78dc0770"/>
+      <property name="SCINTILLATIONRISETIME1" ref="SCINTILLATIONRISETIME10xc78dc0770"/>
+      <property name="SCINTILLATIONRISETIME2" ref="SCINTILLATIONRISETIME20xc78dc0770"/>
+      <property name="SCINTILLATIONRISETIME3" ref="SCINTILLATIONRISETIME30xc78dc0770"/>
+      <property name="SCINTILLATIONYIELD1" ref="SCINTILLATIONYIELD10xc78dc0770"/>
+      <property name="SCINTILLATIONYIELD2" ref="SCINTILLATIONYIELD20xc78dc0770"/>
+      <property name="SCINTILLATIONYIELD3" ref="SCINTILLATIONYIELD30xc78dc0770"/>
+      <property name="ELECTRONSCINTILLATIONYIELD1" ref="ELECTRONSCINTILLATIONYIELD10xc78dc0770"/>
+      <property name="ELECTRONSCINTILLATIONTIMECONSTANT1" ref="ELECTRONSCINTILLATIONTIMECONSTANT10xc78dc0770"/>
+      <property name="CELER_SCINTILLATIONLAMBDAMEAN1" ref="CELER_SCINTILLATIONLAMBDAMEAN10xc78dc0770"/>
+      <property name="CELER_SCINTILLATIONLAMBDAMEAN2" ref="CELER_SCINTILLATIONLAMBDAMEAN20xc78dc0770"/>
+      <property name="CELER_SCINTILLATIONLAMBDASIGMA1" ref="CELER_SCINTILLATIONLAMBDASIGMA10xc78dc0770"/>
+      <property name="CELER_SCINTILLATIONLAMBDASIGMA2" ref="CELER_SCINTILLATIONLAMBDASIGMA20xc78dc0770"/>
+      <property name="ELECTRONSCINTILLATIONRISETIME1" ref="ELECTRONSCINTILLATIONRISETIME10xc78dc0770"/>
       <T unit="K" value="293.15"/>
       <MEE unit="eV" value="188"/>
       <D unit="g/cm3" value="1.396"/>
-      <fraction n="1" ref="Ar0xb55114c00"/>
+      <fraction n="1" ref="Ar0xc7914d5c0"/>
     </material>
-    <isotope N="1" Z="1" name="H10xb55035600">
+    <isotope N="1" Z="1" name="H10xc79174400">
       <atom unit="g/mole" value="1.00782503081372"/>
     </isotope>
-    <isotope N="2" Z="1" name="H20xb550354c0">
+    <isotope N="2" Z="1" name="H20xc791743c0">
       <atom unit="g/mole" value="2.01410199966617"/>
     </isotope>
-    <element name="H0xb55114b40">
-      <fraction n="0.999885" ref="H10xb55035600"/>
-      <fraction n="0.000115" ref="H20xb550354c0"/>
+    <element name="H0xc7914d500">
+      <fraction n="0.999885" ref="H10xc79174400"/>
+      <fraction n="0.000115" ref="H20xc791743c0"/>
     </element>
-    <material name="vacuum0xb551e0280" state="gas">
+    <material name="vacuum0xc791f0000" state="gas">
       <T unit="K" value="2.73"/>
       <P unit="pascal" value="3e-18"/>
       <MEE unit="eV" value="21.8"/>
       <D unit="g/cm3" value="1e-25"/>
-      <fraction n="1" ref="H0xb55114b40"/>
+      <fraction n="1" ref="H0xc7914d500"/>
     </material>
   </materials>
 
   <solids>
-    <sphere aunit="deg" deltaphi="180" deltatheta="180" lunit="mm" name="det_shell_top0xb54de4a80" rmax="1100" rmin="1000" startphi="0" starttheta="0"/>
-    <sphere aunit="deg" deltaphi="180" deltatheta="180" lunit="mm" name="det_shell_bot0xb54de4c00" rmax="1100" rmin="1000" startphi="180" starttheta="0"/>
-    <sphere aunit="deg" deltaphi="360" deltatheta="180" lunit="mm" name="det_shell0xb54de4900" rmax="1100" rmin="1000" startphi="0" starttheta="0"/>
-    <sphere aunit="deg" deltaphi="360" deltatheta="180" lunit="mm" name="lar_sphere0xb54de4600" rmax="1000" rmin="0" startphi="0" starttheta="0"/>
-    <sphere aunit="deg" deltaphi="360" deltatheta="180" lunit="mm" name="world_sphere0xb54de4780" rmax="10000" rmin="0" startphi="0" starttheta="0"/>
+    <sphere aunit="deg" deltaphi="180" deltatheta="180" lunit="mm" name="det_shell_top0x109fc1a40" rmax="1100" rmin="1000" startphi="0" starttheta="0"/>
+    <sphere aunit="deg" deltaphi="180" deltatheta="180" lunit="mm" name="det_shell_bot0x109fccd80" rmax="1100" rmin="1000" startphi="180" starttheta="0"/>
+    <sphere aunit="deg" deltaphi="360" deltatheta="180" lunit="mm" name="det_shell0x109fc18c0" rmax="1100" rmin="1000" startphi="0" starttheta="0"/>
+    <sphere aunit="deg" deltaphi="360" deltatheta="180" lunit="mm" name="lar_sphere0x109fc1240" rmax="1000" rmin="0" startphi="0" starttheta="0"/>
+    <sphere aunit="deg" deltaphi="360" deltatheta="180" lunit="mm" name="world_sphere0x109fc1740" rmax="10000" rmin="0" startphi="0" starttheta="0"/>
   </solids>
 
   <structure>
-    <volume name="detshell_top0xb54c3ebc0">
-      <materialref ref="lAr0xb551e0000"/>
-      <solidref ref="det_shell_top0xb54de4a80"/>
+    <volume name="detshell_top0xc78c21c20">
+      <materialref ref="lAr0xc791f03c0"/>
+      <solidref ref="det_shell_top0x109fc1a40"/>
       <auxiliary auxtype="gammaECut" auxunit="MeV" auxvalue="0.00520503"/>
       <auxiliary auxtype="electronECut" auxunit="MeV" auxvalue="0.273977"/>
       <auxiliary auxtype="positronECut" auxunit="MeV" auxvalue="0.26618"/>
       <auxiliary auxtype="protonECut" auxunit="MeV" auxvalue="0"/>
       <auxiliary auxtype="SensDet" auxvalue="LArDetector"/>
     </volume>
-    <volume name="detshell_bot0xb54c3ec60">
-      <materialref ref="lAr0xb551e0000"/>
-      <solidref ref="det_shell_bot0xb54de4c00"/>
+    <volume name="detshell_bot0xc78c21cc0">
+      <materialref ref="lAr0xc791f03c0"/>
+      <solidref ref="det_shell_bot0x109fccd80"/>
       <auxiliary auxtype="gammaECut" auxunit="MeV" auxvalue="0.00520503"/>
       <auxiliary auxtype="electronECut" auxunit="MeV" auxvalue="0.273977"/>
       <auxiliary auxtype="positronECut" auxunit="MeV" auxvalue="0.26618"/>
       <auxiliary auxtype="protonECut" auxunit="MeV" auxvalue="0"/>
       <auxiliary auxtype="SensDet" auxvalue="LArDetector"/>
     </volume>
-    <volume name="detshell0xb54c3ed00">
-      <materialref ref="vacuum0xb551e0280"/>
-      <solidref ref="det_shell0xb54de4900"/>
-      <physvol name="detshell_top_PV0xb550f0910">
-        <volumeref ref="detshell_top0xb54c3ebc0"/>
+    <volume name="detshell0xc78c21d60">
+      <materialref ref="vacuum0xc791f0000"/>
+      <solidref ref="det_shell0x109fc18c0"/>
+      <physvol name="detshell_top_PV0xc78c29ae0">
+        <volumeref ref="detshell_top0xc78c21c20"/>
       </physvol>
-      <physvol name="detshell_bot_PV0xb550f09b0">
-        <volumeref ref="detshell_bot0xb54c3ec60"/>
+      <physvol name="detshell_bot_PV0xc78c29b80">
+        <volumeref ref="detshell_bot0xc78c21cc0"/>
       </physvol>
       <auxiliary auxtype="gammaECut" auxunit="MeV" auxvalue="0.00099"/>
       <auxiliary auxtype="electronECut" auxunit="MeV" auxvalue="0.00099"/>
       <auxiliary auxtype="positronECut" auxunit="MeV" auxvalue="0.00099"/>
       <auxiliary auxtype="protonECut" auxunit="MeV" auxvalue="0"/>
     </volume>
-    <volume name="sphere0xb54c3eb20">
-      <materialref ref="lAr0xb551e0000"/>
-      <solidref ref="lar_sphere0xb54de4600"/>
+    <volume name="sphere0xc78c21b80">
+      <materialref ref="lAr0xc791f03c0"/>
+      <solidref ref="lar_sphere0x109fc1240"/>
       <auxiliary auxtype="gammaECut" auxunit="MeV" auxvalue="0.00520503"/>
       <auxiliary auxtype="electronECut" auxunit="MeV" auxvalue="0.273977"/>
       <auxiliary auxtype="positronECut" auxunit="MeV" auxvalue="0.26618"/>
       <auxiliary auxtype="protonECut" auxunit="MeV" auxvalue="0"/>
       <auxiliary auxtype="SensDet" auxvalue="LArDetector"/>
     </volume>
-    <volume name="world0xb54c3eda0">
-      <materialref ref="vacuum0xb551e0280"/>
-      <solidref ref="world_sphere0xb54de4780"/>
-      <physvol name="detshell_PV0xb550f0aa0">
-        <volumeref ref="detshell0xb54c3ed00"/>
+    <volume name="world0xc78c21e00">
+      <materialref ref="vacuum0xc791f0000"/>
+      <solidref ref="world_sphere0x109fc1740"/>
+      <physvol name="detshell_PV0xc78c29c70">
+        <volumeref ref="detshell0xc78c21d60"/>
       </physvol>
-      <physvol name="sphere_PV0xb550f0b40">
-        <volumeref ref="sphere0xb54c3eb20"/>
+      <physvol name="sphere_PV0xc78c29d10">
+        <volumeref ref="sphere0xc78c21b80"/>
       </physvol>
       <auxiliary auxtype="gammaECut" auxunit="MeV" auxvalue="0.00099"/>
       <auxiliary auxtype="electronECut" auxunit="MeV" auxvalue="0.00099"/>
@@ -187,8 +187,8 @@
   </structure>
 
   <userinfo>
-    <auxiliary auxtype="Region" auxvalue="DefaultRegionForTheWorld0xb5511c280">
-      <auxiliary auxtype="volume" auxvalue="world0xb54c3eda0"/>
+    <auxiliary auxtype="Region" auxvalue="DefaultRegionForTheWorld0xc78c1e080">
+      <auxiliary auxtype="volume" auxvalue="world0xc78c21e00"/>
       <auxiliary auxtype="gamcut" auxunit="mm" auxvalue="0.7"/>
       <auxiliary auxtype="ecut" auxunit="mm" auxvalue="0.7"/>
       <auxiliary auxtype="poscut" auxunit="mm" auxvalue="0.7"/>
@@ -197,7 +197,7 @@
   </userinfo>
 
   <setup name="Default" version="1.0">
-    <world ref="world0xb54c3eda0"/>
+    <world ref="world0xc78c21e00"/>
   </setup>
 
 </gdml>
