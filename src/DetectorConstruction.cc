@@ -40,7 +40,6 @@
 #include "SensitiveDetector.hh"
 #include "G4SDManager.hh"
 #include "G4GDMLParser.hh"
-#include "G4LogicalVolumeStore.hh"
 
 #include <map>
 #include "include/config.h"
@@ -48,7 +47,6 @@
 #include "G4LogicalBorderSurface.hh"
 #include "G4LogicalSkinSurface.hh"
 #include "AnalysisManagerHelper.hh"
-#include "corecel/io/Logger.hh"
 // Opticks Related headers
 #ifdef With_Opticks
 #include "Opticks/MySensorIdentifier.hh"
@@ -117,8 +115,6 @@ void DetectorConstruction::ConstructSDandField()
   const G4GDMLAuxMapType *auxmap = fParser->GetAuxMap();
   G4int count = 0;
   G4int sid = 0;
-  std::map<G4String, std::vector<G4LogicalVolume *>> sensdet_map;
-
   // The same as above, but now we are looking for
   // sensitive detectors setting them for the volumes
 
@@ -150,7 +146,6 @@ void DetectorConstruction::ConstructSDandField()
         G4cout << "Attaching sensitive detector " << (*vit).value
                << " to volume " << ((*iter).first)->GetName()
                << G4endl << G4endl;
-        sensdet_map[(*vit).value].push_back((*iter).first);
 
         /* G4VSensitiveDetector* mydet =SDman->FindSensitiveDetector((*vit).value);
          if(mydet)
@@ -205,25 +200,8 @@ void DetectorConstruction::ConstructSDandField()
          }*/
       }
     }
+    // aTrackerSD->SetDetectIds(&fDetectIds);
   }
-  // aTrackerSD->SetDetectIds(&fDetectIds);
-  // --------------------------------------------------------------------------
-  // Attach  sensitive detectors
-  // --------------------------------------------------------------------------
-  // Map: SensDet name -> list of logical volumes
-
-  G4SDManager *sdman = G4SDManager::GetSDMpointer();
-  for (auto &[sd_name, volumes] : sensdet_map)
-  {
-    auto *sd = new GdmlSensitiveDetector(sd_name);
-    sdman->AddNewDetector(sd);
-    for (auto *lv : volumes)
-    {
-      CELER_LOG(debug) << "Attaching SD: " << sd_name << " to LV: " << lv->GetName();
-      lv->SetSensitiveDetector(sd);
-    }
-  }
-
   anaHelper->SetDetectIds(&fDetectIds);
   // G4cout<<"Detector construction sensor surface count " << count <<G4endl;
 
