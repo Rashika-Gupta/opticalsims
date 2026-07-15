@@ -41,7 +41,7 @@
 #include "G4GenericMessenger.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4PrimaryParticle.hh"
-#include "G4ParticleGun.hh"
+
 #include "TFile.h"
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
@@ -53,23 +53,13 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
     : G4VUserPrimaryGeneratorAction(),
       fParticleGun(0), fmsg(nullptr), fFileName(""), finitParticleType("GPS"), fAmount(100)
 {
-
-  fParticleGun = new G4ParticleGun(1);
-  fParticleGun->SetParticleDefinition(G4OpticalPhoton::Definition());
-
-  fParticleGun->SetParticleDefinition(G4OpticalPhoton::Definition());
-  fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));
-  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
-
-  // Must be perpendicular to momentum
-  fParticleGun->SetParticlePolarization(G4ThreeVector(1., 0., 0.));
-
   // G4int n_particle = 1;
-  // fParticleGun = new G4GeneralParticleSource();
+  fParticleGun = new G4GeneralParticleSource();
   fmsg = new G4GenericMessenger(this, "/PrimaryGenerationAction/input/", "");
   fmsg->DeclareProperty("type", finitParticleType, "Initial Particle Type: LArSoft or GPS (Default)");
   fmsg->DeclareProperty("file", fFileName, "File Name to Read");
   fmsg->DeclareProperty("phamount", fAmount, "Amount of Photons to produce");
+  fmsg->DeclareProperty("energyscan", fEnergyScan, "Enable per-event fixed energy scan");
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -84,40 +74,6 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
 {
-  static const std::vector<G4double> energies = {
-      1.8785e-6 * MeV,
-      2.88625e-6 * MeV,
-      2.0e-06 * MeV,
-      3.21e-06 * MeV,
-      3.90205e-6 * MeV,
-      4.95070e-6 * MeV,
-      1.96760e-6 * MeV,
-      5.98475e-6 * MeV,
-      6.9e-6 * MeV,
-      7.55e-6 * MeV,
-      7.8e-6 * MeV,
-      8.0e-6 * MeV,
-      8.2e-6 * MeV,
-      8.5e-6 * MeV,
-      8.7e-6 * MeV,
-      8.9e-6 * MeV,
-      9.0e-6 * MeV,
-      9.1e-6 * MeV,
-      9.2e-6 * MeV,
-      9.49745e-6 * MeV,
-      9.69380e-6 * MeV,
-      9.85e-6 * MeV,
-      1.0e-5 * MeV,
-      1.03e-05 * MeV, 11.4736e-06 * MeV, 11.4849e-06 * MeV, 11.4962e-06 * MeV, 11.5075e-06 * MeV, 11.5188e-06 * MeV, 11.5302e-06 * MeV, 11.5416e-06 * MeV, 11.5530e-06 * MeV, 11.5644e-06 * MeV, 11.5758e-06 * MeV};
-  auto id = anEvent->GetEventID();
-
-  if (id >= energies.size())
-    return;
-
-  fParticleGun->SetParticleEnergy(energies[id]);
-  fParticleGun->GeneratePrimaryVertex(anEvent);
-
-  return;
   if (finitParticleType == "GPS")
   {
     auto analysisManager = G4AnalysisManager::Instance();

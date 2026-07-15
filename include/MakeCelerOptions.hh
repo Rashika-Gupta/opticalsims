@@ -96,6 +96,7 @@ celeritas::SetupOptions MakeCelerOptions()
   opts.optical->detectors.callback =
       [](celeritas::Span<celeritas::optical::DetectorHit const> hits)
   {
+    CELER_LOG(debug) << "[Celeritas] Optical callback invoked";
     using celeritas::value_as;
     using celeritas::units::MevEnergy;
     int event_id = G4EventManager::GetEventManager()

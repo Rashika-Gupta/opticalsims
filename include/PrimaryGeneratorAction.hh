@@ -34,8 +34,7 @@
 #define _G04PRIMARYGENERATORACTION_H_
 
 #include "G4VUserPrimaryGeneratorAction.hh"
-// #include "G4GeneralParticleSource.hh"
-#include "G4ParticleGun.hh"
+#include "G4GeneralParticleSource.hh"
 #include "G4GenericMessenger.hh"
 #include "globals.hh"
 
@@ -47,7 +46,7 @@
 #include "Opticks/OpticksHitHandler.hh"
 #endif
 class G4Event;
-// class G4GeneralParticleSource;
+class G4GeneralParticleSource;
 
 /// Primary generator action for GDML sensitive detector example
 
@@ -61,13 +60,13 @@ public:
   void setPhotons(std::vector<sphoton> sphotons);
 #endif
 private:
-  // G4GeneralParticleSource *fParticleGun;
-  G4ParticleGun *fParticleGun;
-
+  G4GeneralParticleSource *fParticleGun;
   G4GenericMessenger *fmsg;
   G4String fFileName;
   G4String finitParticleType;
   G4int fAmount;
+  std::vector<G4double> fEnergyList; // fixed energies per event, in eV (or your unit)
+  G4bool fEnergyScan;                // toggle scan mode
 #ifdef With_Opticks
   std::vector<sphoton> sphotons;
 #endif

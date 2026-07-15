@@ -17,10 +17,7 @@ public:
     ArapucaHit();
     ~ArapucaHit();
     ArapucaHit(G4int ipid, G4int isid, G4String iname, G4double iwave, G4double itime,
-               G4ThreeVector ipos, G4ThreeVector idire, G4ThreeVector ipol,
-               G4int itrack_id,
-               G4int inum_steps,
-               G4double istep_length);
+               G4ThreeVector ipos, G4ThreeVector idire, G4ThreeVector ipol, G4int itrack_id, G4int inum_steps, G4double istep_length);
     ArapucaHit(const ArapucaHit &);
     const ArapucaHit &operator=(const ArapucaHit &);
     G4bool operator==(const ArapucaHit &) const;
