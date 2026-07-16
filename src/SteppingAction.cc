@@ -83,6 +83,66 @@ void SteppingAction::UserSteppingAction(const G4Step *step)
                 else if (proc->GetProcessName() == "Cerenkov")
                     procid = 1;
             }
+
+            //------------------------------------------------------------------//
+            // Dump Json file to compare group velocity
+            // optical photon's first step in LAr
+            //------------------------------------------------------------------//
+            auto *vol = step->GetPreStepPoint()->GetPhysicalVolume();
+            G4double energy = aTrack->GetKineticEnergy(); // MeV
+            G4double n = aTrack->GetMaterial()
+                             ->GetMaterialPropertiesTable()
+                             ->GetProperty(kRINDEX)
+                             ->Value(energy);
+            G4double v_group = aTrack->GetVelocity(); // mm/ns internally
+            G4double v_phase = CLHEP::c_light / n;    // mm/ns
+            G4double t = aTrack->GetGlobalTime() / CLHEP::ns;
+            G4double steplen = step->GetStepLength() / CLHEP::mm;
+            G4double dt = step->GetDeltaTime() / CLHEP::ns; // time this step
+            auto *groupvel_table = aTrack->GetMaterial()
+                                       ->GetMaterialPropertiesTable()
+                                       ->GetProperty(kGROUPVEL);
+            G4double vg_direct = groupvel_table->Value(energy);
+            auto *mpt = track->GetMaterial()->GetMaterialPropertiesTable();
+            auto *rindex_table = mpt->GetProperty(kRINDEX);
+            auto *groupvel_table = mpt->GetProperty(kGROUPVEL);
+
+            G4double energy = track->GetKineticEnergy();
+            G4double momentum = track->GetDynamicParticle()->GetTotalMomentum();
+
+            G4double n_direct = rindex_table->Value(energy);
+            G4double vg_table = groupvel_table ? groupvel_table->Value(momentum) : -1;
+            G4double vg_track = track->GetVelocity();
+
+            // -----------------------------------------------
+            // dump a json file with velocity information
+            // -----------------------------------------------
+
+            nlohmann::json j
+                j["track_id"] = track_id;
+            j["process"] = procid == 0   ? "Scintillation"
+                           : procid == 1 ? "Cerenkov"
+                                         : "Unknown";
+
+            j["time_ns"] = time / CLHEP::ns;
+            j["wavelength_nm"] = wavelength;
+
+            j["position_cm"] = {
+                pos.x() / CLHEP::cm,
+                pos.y() / CLHEP::cm,
+                pos.z() / CLHEP::cm};
+
+            j["energy_eV"] = aTrack->GetTotalEnergy() / CLHEP::eV;
+
+            j["volume"] = vol->GetName();
+            j["post_volume"] = PostdetectName;
+            j["step_number"] = aTrack->GetCurrentStepNumber();
+            j["step_length_cm"] = step->GetStepLength() / CLHEP::cm;
+            static std::ofstream dump("optical_births.jsonl",
+                                      std::ios::app);
+
+            dump << j.dump() << '\n';
+
             // --------------------------------------------------------------//
             // Record Step information for LAr only
             // --------------------------------------------------------------//
