@@ -71,7 +71,7 @@ celeritas::SetupOptions MakeCelerOptions()
   // if offload only optical photons
   opts.offload_particles = from_pdgs({G4OpticalPhoton::Definition()->GetPDGEncoding()});
 
-  opts.geometry_output_file = "/Users/r1i/Desktop/OpticalSims-upstream/lar-celer_test_derviate_changed.gdml";
+  opts.geometry_output_file = "/Users/r1i/Desktop/OpticalSims-upstream/dune_changed.gdml";
   CELER_LOG(status) << "Using geometry output: " << opts.geometry_output_file;
   // No Geant4 SD callback from Celeritas — hits come back via optical callback
   opts.sd.enabled = false;
@@ -104,7 +104,7 @@ celeritas::SetupOptions MakeCelerOptions()
                        ->GetEventID();
     std::vector<CelerOpticalHit> celer_hits;
     celer_hits.reserve(hits.size());
-
+    CELER_LOG(debug) << "Hits size: " << hits.size();
     for (auto const &hit : hits)
     {
       CelerOpticalHit h;

@@ -88,6 +88,7 @@ void AnalysisManagerHelper::SavePhotonInfotoFile()
 void AnalysisManagerHelper::SaveG4HitsToFile()
 {
     G4AnalysisManager *AnaMngr = G4AnalysisManager::Instance();
+    G4cout << "Saving " << ArapucaHits.size() << " Arapuca hits to file..." << G4endl;
     auto run = G4RunManager::GetRunManager();
     for (auto hit : ArapucaHits)
     {
