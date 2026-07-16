@@ -40,6 +40,7 @@
 #include "SensitiveDetector.hh"
 #include "G4SDManager.hh"
 #include "G4GDMLParser.hh"
+#include "G4LogicalVolumeStore.hh"
 
 #include <map>
 #include "include/config.h"
@@ -92,22 +93,6 @@ void DetectorConstruction::ConstructSDandField()
     assert(false);
   }
 
-  // G4VPhysicalVolume *vol1,*vol2;
-  //  UserLimits
-  // G4UserLimits* limits = new G4UserLimits(0.01*CLHEP::mm); // or smaller
-  // G4LogicalVolume* myvol;
-
-  //------------------------------------------------
-  // Sensitive detectors
-  //------------------------------------------------
-  /*
-  G4SDManager* SDman = G4SDManager::GetSDMpointer();
-
-  G4String trackerChamberSDname = "PhotonSD";
-  SensitiveDetector* aTrackerSD =
-    new SensitiveDetector(trackerChamberSDname);
-  SDman->AddNewDetector( aTrackerSD );
-  */
   ///////////////////////////////////////////////////////////////////////
   //
   // Example how to retrieve Auxiliary Information for sensitive detector
@@ -115,28 +100,22 @@ void DetectorConstruction::ConstructSDandField()
   const G4GDMLAuxMapType *auxmap = fParser->GetAuxMap();
   G4int count = 0;
   G4int sid = 0;
+  std::map<G4String, std::vector<G4LogicalVolume *>> sensdet_map;
+
   // The same as above, but now we are looking for
   // sensitive detectors setting them for the volumes
 
   for (G4GDMLAuxMapType::const_iterator iter = auxmap->begin();
        iter != auxmap->end(); iter++)
   {
-    /*G4cout << "Volume " << ((*iter).first)->GetName()
-           << " has the following list of auxiliary information: "
-           << G4endl << G4endl;
-    */
 
     for (G4GDMLAuxListType::const_iterator vit = (*iter).second.begin();
          vit != (*iter).second.end(); vit++)
     {
-      // myvol = (*iter).first;
 
       // Surfaces
       if ((*vit).type == "Surface")
       {
-        // vol1=G4PhysicalVolumeStore::GetInstance()->GetVolume((*vit).value+"_PV");
-        // vol2=G4PhysicalVolumeStore::GetInstance()->GetVolume((*iter).first->GetName()+"_PV");
-        // new G4LogicalBorderSurface(((*iter).first->GetName()+"_"+(*vit).value+"_"+(*vit).type),vol1,vol2,ArapucaSurface);
         new G4LogicalSkinSurface((*iter).first->GetName() + "_Surface", (*iter).first, ArapucaSurface);
         count++;
       }
@@ -146,12 +125,8 @@ void DetectorConstruction::ConstructSDandField()
         G4cout << "Attaching sensitive detector " << (*vit).value
                << " to volume " << ((*iter).first)->GetName()
                << G4endl << G4endl;
+        sensdet_map[(*vit).value].push_back((*iter).first);
 
-        /* G4VSensitiveDetector* mydet =SDman->FindSensitiveDetector((*vit).value);
-         if(mydet)
-         { */
-
-        // myvol->SetSensitiveDetector(mydet);
         if (G4Threading::IsMasterThread())
         {
 
@@ -159,13 +134,7 @@ void DetectorConstruction::ConstructSDandField()
           std::vector<std::string_view> spfirst = Split(name, '_');
           if (spfirst.size() > 1)
           {
-            /*std::vector<std::string_view> spsecond=Split(spfirst[1],'-');
-            int first,second,third;
-            first=std::stoi(std::string(spsecond[2]));
-            second=std::stoi(std::string(spsecond[1]));
-            third=std::stoi(std::string(spsecond[0]));
-            sid=third*(10*4)+second*4+first;
-            */
+
             fDetectIds.insert(std::pair<G4String, G4int>((*iter).first->GetName() + "_PV", sid++));
           }
           else
@@ -175,26 +144,12 @@ void DetectorConstruction::ConstructSDandField()
             fDetectIds.insert(std::pair<G4String, G4int>((*iter).first->GetName() + "_PV", -99));
           }
         }
-        /*
-          }
-          else
-          {
-            G4cout << (*vit).value << " detector not found" << G4endl;
-          }
-          */
       }
       else if ((*vit).type == "Solid")
       {
         /*
         if((*vit).value == "True")
         {
-          G4VisAttributes* visatt = new G4VisAttributes(
-            ((*iter).first)->GetVisAttributes()->GetColour());
-          visatt->SetVisibility(true);
-          visatt->SetForceSolid(true);
-          visatt->SetForceAuxEdgeVisible(true);
-          ((*iter).first)->SetVisAttributes(visatt);
-
           //((*iter).first)->SetUserLimits(limits);
 
          }*/
@@ -202,8 +157,24 @@ void DetectorConstruction::ConstructSDandField()
     }
     // aTrackerSD->SetDetectIds(&fDetectIds);
   }
+
+  //------------------------------------------//
+  //------ Attaching SDs for Celeritas--------//
+  //------------------------------------------//
+  G4SDManager *sdman = G4SDManager::GetSDMpointer();
+  for (auto &[sd_name, volumes] : sensdet_map)
+  {
+    std::cout << "Attaching sensitive detector " << sd_name
+              << " to " << volumes.size() << " volumes" << std::endl;
+    auto *sd = new GdmlSensitiveDetector(sd_name);
+    sdman->AddNewDetector(sd);
+    for (auto *lv : volumes)
+    {
+      lv->SetSensitiveDetector(sd);
+    }
+  }
+
   anaHelper->SetDetectIds(&fDetectIds);
-  // G4cout<<"Detector construction sensor surface count " << count <<G4endl;
 
   // Pass the World Volume to Opticks
 #ifdef With_Opticks
