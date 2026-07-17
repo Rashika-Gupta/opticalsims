@@ -55,7 +55,7 @@ void SteppingAction::UserSteppingAction(const G4Step *step)
     // Recording the optical photon only if it is detected by the detector
     // could be changed by changing the status.
 
-    if (status == Detection and pdef == G4OpticalPhoton::Definition())
+    if (pdef == G4OpticalPhoton::Definition())
     {
         G4String PredetectName = step->GetPreStepPoint()->GetPhysicalVolume()->GetName();
         G4String PostdetectName = step->GetPostStepPoint()->GetPhysicalVolume()->GetName();
