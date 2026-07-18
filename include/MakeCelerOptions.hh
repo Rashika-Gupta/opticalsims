@@ -69,8 +69,9 @@ celeritas::SetupOptions MakeCelerOptions()
   //  opts.offload_particles = from_pdgs({G4Electron::Definition()->GetPDGEncoding(), G4OpticalPhoton::Definition()->GetPDGEncoding()}); // electron and optical photon
 
   // if offload only optical photons
-  opts.offload_particles = from_pdgs({G4OpticalPhoton::Definition()->GetPDGEncoding()});
+  // opts.offload_particles = from_pdgs({G4OpticalPhoton::Definition()->GetPDGEncoding()});
 
+  opts.offload_particles = {};
   opts.geometry_output_file = "/Users/r1i/Desktop/OpticalSims-upstream/dune_changed.gdml";
   CELER_LOG(status) << "Using geometry output: " << opts.geometry_output_file;
   // No Geant4 SD callback from Celeritas — hits come back via optical callback
@@ -83,7 +84,12 @@ celeritas::SetupOptions MakeCelerOptions()
     opt.capacity.tracks = 50650;
     opt.capacity.primaries = 8 * opt.capacity.tracks;
     opt.capacity.generators = 2 * opt.capacity.tracks;
-    opt.generator = celeritas::inp::OpticalDirectGenerator{};
+
+    // offload optical photon tracks to celeritas created by Geant4
+    // opt.generator = celeritas::inp::OpticalDirectGenerator{};
+
+    // Accept Distribution data from scintillation offload to celeritas
+    opt.generator = celeritas::inp::OpticalOffloadGenerator{};
 
     // ── Disable optical physics processes ──────────────────────────────────
     return opt;

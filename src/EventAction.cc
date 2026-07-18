@@ -15,6 +15,7 @@
 #include "AnalysisManagerHelper.hh"
 
 #include "include/config.h"
+#include <accel/UserActionIntegration.hh>
 
 #ifdef With_Opticks
 #include "SEvt.hh"
@@ -31,6 +32,8 @@ EventAction::~EventAction() {}
 
 void EventAction::BeginOfEventAction(const G4Event *event)
 {
+    celeritas::UserActionIntegration::Instance().BeginOfEventAction(event);
+
     startTime = chrono::high_resolution_clock::now();
     AnalysisManagerHelper *anaHelper = AnalysisManagerHelper::getInstance();
     anaHelper->Reset();
@@ -95,6 +98,7 @@ void EventAction::EndOfEventAction(const G4Event *event)
     {
         anaHelper->SaveG4HitsToFile();
     }
+    celeritas::UserActionIntegration::Instance().EndOfEventAction(event);
 
     G4cout << "Event " << evtID << ", End Time " << EventTime << " seconds" << G4endl;
 }
