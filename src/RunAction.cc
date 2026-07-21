@@ -19,9 +19,6 @@
 #include <corecel/io/OutputRegistry.hh>
 #include <nlohmann/json.hpp>
 
-// using useraction integration to offload distribution data to celeritas
-#include <accel/UserActionIntegration.hh>
-
 RunAction::RunAction() : G4UserRunAction(), fmsg(nullptr), fFileName("out.csv")
 {
     // G4int n_particle = 1;
@@ -39,8 +36,31 @@ void RunAction::BeginOfRunAction(const G4Run *run)
 {
 
     // Offload to Celeritas if enabled
-    // celeritas::TrackingManagerIntegration::Instance().BeginOfRunAction(run);
-    celeritas::UserActionIntegration::Instance().BeginOfRunAction(run);
+    celeritas::TrackingManagerIntegration::Instance().BeginOfRunAction(run);
+    auto *mpt = G4Material::GetMaterial("LAr")->GetMaterialPropertiesTable();
+    auto *groupvel_table = mpt->GetProperty(kGROUPVEL);
+    auto *rindex_table = mpt->GetProperty(kRINDEX);
+    // ── Dump GROUPVEL table to JSONL ──────────────────────────────────────
+    std::ofstream out("gdml-group-vel-g4.jsonl");
+    out << std::scientific << std::setprecision(8);
+    // Header record — identifies the source
+    for (size_t i = 0; i < groupvel_table->GetVectorLength(); ++i)
+    {
+        G4double E = groupvel_table->Energy(i); // MeV
+        G4double vg = (*groupvel_table)[i];     // mm/ns
+        G4double n = rindex_table->Value(E);
+
+        nlohmann::json rec;
+        rec["i"] = i;
+        rec["E_MeV"] = E;
+        rec["n"] = n;
+        rec["vg_over_c"] = vg / CLHEP::c_light;
+        rec["vphase_over_c"] = 1.0 / n;
+
+        out << rec.dump() << "\n";
+    }
+    CELER_LOG(info) << "GROUPVEL table written to gdml-group-vel-g4.jsonl (" << groupvel_table->GetVectorLength() << " entries)";
+    // ─────────────────────────────────────────────────────────────────────
 
     // Get the analysis manager
     G4AnalysisManager *analysisManager = G4AnalysisManager::Instance();
@@ -131,40 +151,40 @@ void RunAction::EndOfRunAction(const G4Run *run)
     std::cout << "Run time: " << RunTime << " seconds" << G4endl;
     using Mode = celeritas::OffloadMode;
 
-    // auto &tmi = celeritas::TrackingManagerIntegration::Instance();
+    auto &tmi = celeritas::TrackingManagerIntegration::Instance();
     if (G4Threading::IsWorkerThread() || !G4Threading::IsMultithreadedApplication())
     {
 
-        // if (tmi.GetMode() == Mode::enabled)
-        //{
-        // auto &integration = celeritas::detail::IntegrationSingleton::instance();
-        // auto &local = dynamic_cast<celeritas::LocalTransporter &>(
-        //     integration.local_offload());
-        //
-        // auto const &optical_collector = integration.shared_params().problem_loaded().optical_collector;
-        //
-        // if (optical_collector)
-        //{
-        //    // run->GetNumberOfEvent();
-        //    G4cout << "nEvents: " << run->GetNumberOfEvent() << "\n";
-        //
-        //    auto const &accum = optical_collector->optical_state(local.GetState()).accum();
-        //
-        //    G4cout << "Celeritas generated " << accum.steps
-        //           << " optical photons" << "\n";
-        //}
-        // auto counter_stats = optical_collector->exchange_counters(local.GetState().aux());
-        // size_t total_photons_generated = 0;
-        // for (auto const &gen_counters : counter_stats.generators)
-        //{
-        //    total_photons_generated += gen_counters.num_generated;
-        //}
-        // G4cout << "Celeritas generated " << total_photons_generated
-        //       << " optical photons (generated)\n";
-        //// Write Celeritas diagnostics to ROOT file
-        // std::ostringstream diagnostics;
-        // tmi.GetParams().output_reg()->output(&diagnostics);
-        // }
+        if (tmi.GetMode() == Mode::enabled)
+        {
+            // auto &integration = celeritas::detail::IntegrationSingleton::instance();
+            // auto &local = dynamic_cast<celeritas::LocalTransporter &>(
+            //     integration.local_offload());
+            //
+            // auto const &optical_collector = integration.shared_params().problem_loaded().optical_collector;
+            //
+            // if (optical_collector)
+            //{
+            //    // run->GetNumberOfEvent();
+            //    G4cout << "nEvents: " << run->GetNumberOfEvent() << "\n";
+            //
+            //    auto const &accum = optical_collector->optical_state(local.GetState()).accum();
+            //
+            //    G4cout << "Celeritas generated " << accum.steps
+            //           << " optical photons" << "\n";
+            //}
+            // auto counter_stats = optical_collector->exchange_counters(local.GetState().aux());
+            // size_t total_photons_generated = 0;
+            // for (auto const &gen_counters : counter_stats.generators)
+            //{
+            //    total_photons_generated += gen_counters.num_generated;
+            //}
+            // G4cout << "Celeritas generated " << total_photons_generated
+            //       << " optical photons (generated)\n";
+            //// Write Celeritas diagnostics to ROOT file
+            // std::ostringstream diagnostics;
+            // tmi.GetParams().output_reg()->output(&diagnostics);
+        }
     }
     // Write and Close File
     auto analysisManager = G4AnalysisManager::Instance();
@@ -176,6 +196,5 @@ void RunAction::EndOfRunAction(const G4Run *run)
         analysisManager->Clear();
     }
     // Return Celeritas to an invalid state
-    // tmi.EndOfRunAction(run);
-    celeritas::UserActionIntegration::Instance().EndOfRunAction(run);
+    tmi.EndOfRunAction(run);
 }

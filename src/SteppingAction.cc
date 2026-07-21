@@ -10,6 +10,8 @@
 #include "nlohmann/json.hpp"
 #include <fstream>
 #include <unistd.h>
+
+#include <unistd.h>
 SteppingAction::SteppingAction() : G4UserSteppingAction(), anaHelper(AnalysisManagerHelper::getInstance())
 {
 }
@@ -55,50 +57,133 @@ void SteppingAction::UserSteppingAction(const G4Step *step)
     // Recording the optical photon only if it is detected by the detector
     // could be changed by changing the status.
 
+    // if (pdef == G4OpticalPhoton::Definition())
+    //{
+    //     G4String PredetectName = step->GetPreStepPoint()->GetPhysicalVolume()->GetName();
+    //     G4String PostdetectName = step->GetPostStepPoint()->GetPhysicalVolume()->GetName();
+    //
+    //    G4ThreeVector PPosition = aTrack->GetPosition();
+    //    G4ThreeVector PMomentDir = aTrack->GetMomentumDirection();
+    //    G4ThreeVector PPolar = aTrack->GetPolarization();
+    //    G4double time = aTrack->GetGlobalTime();
+    //
+    //    G4double Wavelength = EtoWavelength(aTrack->GetTotalEnergy() / CLHEP::eV);
+    //    const G4VProcess *proc = aTrack->GetCreatorProcess();
+    //    G4String processName;
+    //    G4int Procid = -1;
+    //    G4int Sid = -1;
+    //    G4int TrackID = aTrack->GetTrackID();
+    //    G4int NumSteps = aTrack->GetCurrentStepNumber();
+    //
+    //    G4double step_length = step->GetStepLength();
+    //    std::map<G4String, G4int> *fDetectIds = anaHelper->GetDetectIds();
+    //
+    //    auto it = fDetectIds->find(PostdetectName);
+    //    if (it != fDetectIds->end())
+    //    {
+    //        Sid = it->second;
+    //    }
+    //
+    //    else
+    //    {
+    //
+    //        return;
+    //    }
+    //
+    //    if (proc != NULL)
+    //        processName = proc->GetProcessName();
+    //    else
+    //        processName = "None";
+    //    if (processName.compare("Scintillation") == 0)
+    //        Procid = 0;
+    //    else if (processName.compare("Cerenkov") == 0)
+    //        Procid = 1;
+    //
+    //    ArapucaHit Hit = ArapucaHit(Procid, Sid, PostdetectName, Wavelength, time, PPosition, PMomentDir, PPolar, TrackID, NumSteps, step_length);
+    //    anaHelper->AddG4Hits(Hit);
+    //}
     if (pdef == G4OpticalPhoton::Definition())
     {
-        G4String PredetectName = step->GetPreStepPoint()->GetPhysicalVolume()->GetName();
-        G4String PostdetectName = step->GetPostStepPoint()->GetPhysicalVolume()->GetName();
 
-        G4ThreeVector PPosition = aTrack->GetPosition();
-        G4ThreeVector PMomentDir = aTrack->GetMomentumDirection();
-        G4ThreeVector PPolar = aTrack->GetPolarization();
-        G4double time = aTrack->GetGlobalTime();
-
-        G4double Wavelength = EtoWavelength(aTrack->GetTotalEnergy() / CLHEP::eV);
-        const G4VProcess *proc = aTrack->GetCreatorProcess();
-        G4String processName;
-        G4int Procid = -1;
-        G4int Sid = -1;
-        G4int TrackID = aTrack->GetTrackID();
-        G4int NumSteps = aTrack->GetCurrentStepNumber();
-
-        G4double step_length = step->GetStepLength();
-        std::map<G4String, G4int> *fDetectIds = anaHelper->GetDetectIds();
-
-        auto it = fDetectIds->find(PostdetectName);
-        if (it != fDetectIds->end())
+        if (aTrack->GetCurrentStepNumber() == 1)
         {
-            Sid = it->second;
+            auto *vol = step->GetPreStepPoint()->GetPhysicalVolume();
+
+            if (vol && vol->GetLogicalVolume() && vol->GetLogicalVolume()->GetMaterial() && vol->GetLogicalVolume()->GetMaterial()->GetName() == "LAr")
+            {
+                G4ThreeVector pos = aTrack->GetPosition();
+                G4ThreeVector dir = aTrack->GetMomentumDirection();
+                G4ThreeVector pol = aTrack->GetPolarization();
+
+                G4double time = aTrack->GetGlobalTime();
+                G4double wavelength = EtoWavelength(aTrack->GetTotalEnergy() / CLHEP::eV);
+
+                G4int track_id = aTrack->GetTrackID();
+
+                G4int procid = -1;
+                if (auto const *proc = aTrack->GetCreatorProcess())
+                {
+                    if (proc->GetProcessName() == "Scintillation")
+                        procid = 0;
+                    else if (proc->GetProcessName() == "Cerenkov")
+                        procid = 1;
+                }
+
+                //------------------------------------------------------------------//
+                // Dump Json file to compare group velocity
+                // optical photon's first step in LAr
+                //------------------------------------------------------------------//
+                auto *vol = step->GetPreStepPoint()->GetPhysicalVolume();
+                G4double energy = aTrack->GetKineticEnergy(); // MeV
+                G4double n = aTrack->GetMaterial()
+                                 ->GetMaterialPropertiesTable()
+                                 ->GetProperty(kRINDEX)
+                                 ->Value(energy);
+                G4double v_group = aTrack->GetVelocity(); // mm/ns internally
+                G4double v_phase = CLHEP::c_light / n;    // mm/ns
+                G4double t = aTrack->GetGlobalTime() / CLHEP::ns;
+                G4double steplen = step->GetStepLength() / CLHEP::mm;
+                G4double dt = step->GetDeltaTime() / CLHEP::ns; // time this step
+                auto *groupvel_table = aTrack->GetMaterial()
+                                           ->GetMaterialPropertiesTable()
+                                           ->GetProperty(kGROUPVEL);
+                G4double vg_direct = groupvel_table->Value(energy);
+                auto *mpt = aTrack->GetMaterial()->GetMaterialPropertiesTable();
+                auto *rindex_table = mpt->GetProperty(kRINDEX);
+
+                G4double momentum = aTrack->GetDynamicParticle()->GetTotalMomentum();
+
+                G4double n_direct = rindex_table->Value(energy);
+                G4double vg_table = groupvel_table ? groupvel_table->Value(momentum) : -1;
+                G4double vg_track = aTrack->GetVelocity();
+
+                // -----------------------------------------------
+                // dump a json file with velocity information
+                // -----------------------------------------------
+
+                nlohmann::json j;
+                j["energy"] = energy;
+                j["rindex"] = n_direct;
+                j["v_phase"] = v_phase;
+                j["t"] = t;
+                j["steplen"] = steplen;
+                j["vg_direct"] = vg_direct;
+                j["vg_track_over_c"] = vg_track / CLHEP::c_light;
+                j["vg_track"] = vg_track;
+                static std::ofstream dump("group-vel-g4-steppingaction.jsonl",
+                                          std::ios::app);
+
+                dump << j.dump() << '\n';
+
+                // --------------------------------------------------------------//
+                // Record Step information for LAr only
+                // --------------------------------------------------------------//
+                ArapucaHit hit(procid, 0, // dummy detector id
+                               "LAr",     // filling with LAr
+                               wavelength, time, pos, dir, pol, track_id, aTrack->GetCurrentStepNumber(), step->GetStepLength());
+                anaHelper->AddG4Hits(hit);
+            }
         }
-
-        else
-        {
-
-            return;
-        }
-
-        if (proc != NULL)
-            processName = proc->GetProcessName();
-        else
-            processName = "None";
-        if (processName.compare("Scintillation") == 0)
-            Procid = 0;
-        else if (processName.compare("Cerenkov") == 0)
-            Procid = 1;
-
-        ArapucaHit Hit = ArapucaHit(Procid, Sid, PostdetectName, Wavelength, time, PPosition, PMomentDir, PPolar, TrackID, NumSteps, step_length);
-        anaHelper->AddG4Hits(Hit);
     }
 }
 

@@ -69,10 +69,9 @@ celeritas::SetupOptions MakeCelerOptions()
   //  opts.offload_particles = from_pdgs({G4Electron::Definition()->GetPDGEncoding(), G4OpticalPhoton::Definition()->GetPDGEncoding()}); // electron and optical photon
 
   // if offload only optical photons
-  // opts.offload_particles = from_pdgs({G4OpticalPhoton::Definition()->GetPDGEncoding()});
+  opts.offload_particles = from_pdgs({G4OpticalPhoton::Definition()->GetPDGEncoding()});
 
-  opts.offload_particles = {};
-  opts.geometry_output_file = "/Users/r1i/Desktop/OpticalSims-upstream/dune_changed.gdml";
+  opts.geometry_output_file = "/Users/r1i/Desktop/OpticalSims-upstream/lar-celer_test_derviate_changed.gdml";
   CELER_LOG(status) << "Using geometry output: " << opts.geometry_output_file;
   // No Geant4 SD callback from Celeritas — hits come back via optical callback
   opts.sd.enabled = false;
@@ -84,12 +83,7 @@ celeritas::SetupOptions MakeCelerOptions()
     opt.capacity.tracks = 50650;
     opt.capacity.primaries = 8 * opt.capacity.tracks;
     opt.capacity.generators = 2 * opt.capacity.tracks;
-
-    // offload optical photon tracks to celeritas created by Geant4
-    // opt.generator = celeritas::inp::OpticalDirectGenerator{};
-
-    // Accept Distribution data from scintillation offload to celeritas
-    opt.generator = celeritas::inp::OpticalOffloadGenerator{};
+    opt.generator = celeritas::inp::OpticalDirectGenerator{};
 
     // ── Disable optical physics processes ──────────────────────────────────
     return opt;
@@ -102,7 +96,6 @@ celeritas::SetupOptions MakeCelerOptions()
   opts.optical->detectors.callback =
       [](celeritas::Span<celeritas::optical::DetectorHit const> hits)
   {
-    CELER_LOG(debug) << "[Celeritas] Optical callback invoked";
     using celeritas::value_as;
     using celeritas::units::MevEnergy;
     int event_id = G4EventManager::GetEventManager()
@@ -110,7 +103,7 @@ celeritas::SetupOptions MakeCelerOptions()
                        ->GetEventID();
     std::vector<CelerOpticalHit> celer_hits;
     celer_hits.reserve(hits.size());
-    CELER_LOG(debug) << "Hits size: " << hits.size();
+
     for (auto const &hit : hits)
     {
       CelerOpticalHit h;
