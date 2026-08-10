@@ -62,6 +62,17 @@ endif()
 #
 add_executable(gdml_det gdml_det.cc ${sources} ${headers})
 
+set(OPTICALSIMS_CELERITAS_MODE "optical-track" CACHE STRING
+    "Default Celeritas offload mode")
+
+set_property(CACHE OPTICALSIMS_CELERITAS_MODE PROPERTY STRINGS
+    optical-track
+    optical-distribution
+    electron-photon
+    optical-gun)
+
+target_compile_definitions(gdml_det PRIVATE
+    DEFAULT_OFFLOAD_MODE="${OPTICALSIMS_CELERITAS_MODE}")
 #target_link_libraries(gdml_det ${Geant4_LIBRARIES} )
 if(NOT Celeritas_FOUND)
   message(FATAL_ERROR
