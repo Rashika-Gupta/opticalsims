@@ -5,13 +5,20 @@
 #ifndef G4_PHYSICSLIST_HH
 #define G4_PHYSICSLIST_HH
 
+#include <celeritas/ext/GeantPhysicsOptions.hh>
+#include <celeritas/g4/SupportedOpticalPhysics.hh>
 #include "G4VModularPhysicsList.hh"
 #include "FTFP_BERT_HP.hh"
-class PhysicsList : public FTFP_BERT_HP {
+class PhysicsList : public FTFP_BERT_HP
+{
 public:
-    PhysicsList();
-    virtual ~PhysicsList();
+    explicit PhysicsList(G4String const &offloadMode);
+
+    virtual ~PhysicsList() noexcept;
+
+private:
+    celeritas::GeantOpticalPhysicsOptions optical_options() const;
+    celeritas::GeantPhysicsOptions physics_options() const;
 };
 
-
-#endif //G4_PHYSICSLIST_HH
+#endif // G4_PHYSICSLIST_HH

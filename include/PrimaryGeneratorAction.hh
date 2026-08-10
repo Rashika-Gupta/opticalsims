@@ -52,51 +52,48 @@ class G4GeneralParticleSource;
 
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
-  public:
+public:
+  PrimaryGeneratorAction(std::string celer_offload_mode);
+  ~PrimaryGeneratorAction();
+  struct PrimaryPhoton
+  {
+    G4double e;
+    G4double mx, my, mz;
+    G4double px, py, pz;
+  };
+  void GeneratePrimaries(G4Event *anEvent) override;
+  void GeneratePrimaryLinearly(G4Event *anEvent);
+  void SinglePhotonGenerator(G4PrimaryVertex *vertex, PrimaryPhoton &pht);
+  std::vector<G4double> linspace(G4double start, G4double end, G4int num, G4int factor);
+  G4double EnergyToWavelength(G4double energy);
+  G4double EnergySigmaToWavelengthSigma(G4double meanEnergy, G4double sigmaEnergy);
+#ifdef With_Opticks
+  void setPhotons(std::vector<sphoton> sphotons);
+  void GenStorchPrimaries(unsigned long long N);
+  void GenSphotonsPrimary(PrimaryPhoton &pht);
+#endif
+private:
+  G4GeneralParticleSource *fParticleGun;
+  G4GenericMessenger *fmsg;
+  G4String fFileName;
+  G4String finitParticleType;
+  G4int fAmount;
+  G4ThreeVector fPosition;
+  G4double fMom;
+  G4double fSigmaMom;
+  G4ThreeVector fPhotonAmount;
+  G4bool fVerbose;
 
-    PrimaryGeneratorAction();
-   ~PrimaryGeneratorAction();
-    struct PrimaryPhoton
-    {
-       G4double e;
-       G4double mx,my,mz;
-       G4double px,py,pz;
+#ifdef With_Opticks
+  std::vector<sphoton> sphotons;
 
-    };
-    void GeneratePrimaries(G4Event* anEvent) override;
-    void GeneratePrimaryLinearly(G4Event * anEvent);
-    void SinglePhotonGenerator(G4PrimaryVertex *vertex, PrimaryPhoton &pht);
-    std::vector<G4double> linspace(G4double start, G4double end, G4int num,G4int factor);
-   G4double EnergyToWavelength(G4double energy);
-   G4double EnergySigmaToWavelengthSigma(G4double meanEnergy, G4double sigmaEnergy);
-   #ifdef With_Opticks
-    void setPhotons(std::vector<sphoton> sphotons);
-    void GenStorchPrimaries(unsigned long long N);
-    void GenSphotonsPrimary(PrimaryPhoton &pht);
-   #endif
-  private:
+#endif
 
-    G4GeneralParticleSource* fParticleGun;
-    G4GenericMessenger * fmsg ;
-    G4String fFileName;
-    G4String finitParticleType;
-    G4int fAmount;
-    G4ThreeVector fPosition;
-    G4double fMom;
-    G4double fSigmaMom;
-    G4ThreeVector fPhotonAmount;
-    G4bool fVerbose;
+  G4bool simPhotonCPU;
+  G4String fGPUPhotonType;
 
-    #ifdef With_Opticks
-    std::vector<sphoton> sphotons;
-
-    #endif
-
-
-   G4bool simPhotonCPU;
-   G4String fGPUPhotonType;
-
-
+private:
+  std::string celer_offload_mode_;
 };
 
 #endif

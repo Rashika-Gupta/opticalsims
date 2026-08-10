@@ -50,11 +50,10 @@
 #include "G4EmStandardPhysics_option4.hh"
 #include "PhysicsList.hh"
 // macro loader
-#include  "include/config.h"
+#include "include/config.h"
 
 // Opticks related header files
 #include "G4OpticalPhysicsOpticks.hh"
-
 #ifdef With_Opticks
 #include <QString>
 #include <QtGlobal>
@@ -63,97 +62,134 @@
 #include <cuda_runtime.h>
 #endif
 
+// Celeritas related header files
+#include <accel/SharedParams.hh>
+#include <accel/TrackingManagerConstructor.hh>
+#include <accel/TrackingManagerIntegration.hh>
+#include <accel/UserActionIntegration.hh>
+#include <corecel/sys/Environment.hh>
 
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
-    // Opticks Initialization
-  #ifdef With_Opticks
-      int device;
-      OPTICKS_LOG(argc,argv); // This is needed for opticks
-      cudaDeviceSynchronize();
-      SEventConfig::Initialize();
-      cudaGetDevice(&device);
-      std::cout<<"GPU Device ID "<<device<< std::endl;
-      /*
-        if(device == 1) { cudaSetDevice(0); }
-        std::cout<<"Device "<<device<< std::endl;
-      */
-  #endif
+  // Opticks Initialization
+#ifdef With_Opticks
+  int device;
+  OPTICKS_LOG(argc, argv); // This is needed for opticks
+  cudaDeviceSynchronize();
+  SEventConfig::Initialize();
+  cudaGetDevice(&device);
+  std::cout << "GPU Device ID " << device << std::endl;
+  /*
+    if(device == 1) { cudaSetDevice(0); }
+    std::cout<<"Device "<<device<< std::endl;
+  */
+#endif
 
   G4cout << G4endl;
-  G4cout <<" Usage : " << G4endl;
+  G4cout << " Usage : " << G4endl;
   G4cout << "Interactive Mode : ./gdml_det i ../GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml macros/g04.mac"
          << G4endl;
   G4cout << "Batch Mode : ./gdml_det ../GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml macros/g04.mac"
          << G4endl;
 
-   if (argc<2)
-   {
-      G4cout << "Error! Mandatory input file is not specified!" << G4endl;
-      G4cout << G4endl;
-      return -1;
-   }
+  if (argc < 2)
+  {
+    G4cout << "Error! Mandatory input file is not specified!" << G4endl;
+    G4cout << G4endl;
+    return -1;
+  }
 
-
-   // Detect interactive mode (if only one argument) and define UI session
-   auto * fReader=new ColorReader;
-   auto parser= new G4GDMLParser(fReader);
-   G4UIExecutive* ui = 0;
-   if ( strcmp(argv[1],"i") == 0 ) {
-     ui = new G4UIExecutive(argc, argv);
-     parser->Read(argv[2],false);
-   }
+  // Detect interactive mode (if only one argument) and define UI session
+  auto *fReader = new ColorReader;
+  auto parser = new G4GDMLParser(fReader);
+  G4UIExecutive *ui = 0;
+  if (strcmp(argv[1], "i") == 0)
+  {
+    ui = new G4UIExecutive(argc, argv);
+    parser->Read(argv[2], false);
+  }
   else
-   {
-     parser->Read(argv[1],false);
-   }
+  {
+    parser->Read(argv[1], false);
+  }
 
-   auto* runManager = G4RunManagerFactory::CreateRunManager();
+  auto *runManager = G4RunManagerFactory::CreateRunManager();
+  setenv("OPTICALSIMS_CELERITAS_MODE", DEFAULT_OFFLOAD_MODE, 0);
+  std::string const &offload_mode = celeritas::getenv("OPTICALSIMS_CELERITAS_MODE");
 
   // Physics list
-  G4VModularPhysicsList* physics_list = new PhysicsList();
+  // Physics List owns all optical-process configurations
+  G4VModularPhysicsList *physics_list = new PhysicsList(offload_mode);
 
-  #ifdef With_Opticks
-    std::cout << "Defining Opticks Physics List" << std::endl;
-    physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
-  #else
-    //physics_list->RegisterPhysics(new G4OpticalPhysics());
-    physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
+#ifdef With_Opticks
+  std::cout << "Defining Opticks Physics List" << std::endl;
+  physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
+#endif
+  auto const celeritas_mode = celeritas::SharedParams::GetMode();
 
-  #endif
+  if (offload_mode == "optical-distribution")
+  {
+    // Optical generation data is offloaded through user actions
+    auto &uai = celeritas::UserActionIntegration::Instance();
 
-   runManager->SetUserInitialization(new DetectorConstruction(parser));
-   runManager->SetUserInitialization(physics_list);
-   // User action initialization
-   runManager->SetUserInitialization(new ActionInitialization());
+    uai.SetOptions(MakeCelerOptions(offload_mode));
+    if (uai.GetMode() != celeritas::OffloadMode::enabled)
+    {
+      G4cerr
+          << "Configuration error: optical-distribution requires "
+             "Celeritas transport, but Celeritas is disabled."
+          << G4endl;
+      return 1;
+    }
+  }
+  else
+  { // Geant4 tracks are offloaded through the tracking manager
+    G4cout << "Entering here" << std::endl;
+    auto &tmi = celeritas::TrackingManagerIntegration::Instance();
+    // check status of tmi if celeritas or geant4
+    G4cout << "TrackingManagerIntegration::Instance().GetMode() = " << static_cast<int>(tmi.GetMode()) << std::endl;
+    physics_list->RegisterPhysics(
+        new celeritas::TrackingManagerConstructor(&tmi));
 
+    tmi.SetOptions(MakeCelerOptions(offload_mode));
+  }
 
-   // Initialize visualization
-   G4VisManager* visManager = new G4VisExecutive;
-   visManager->Initialize();
+  runManager->SetUserInitialization(physics_list);
 
-   // Get the pointer to the User Interface manager
-   G4UImanager* UImanager = G4UImanager::GetUIpointer();
+  // User action initialization
+  runManager->SetUserInitialization(new DetectorConstruction(parser));
+  runManager->SetUserInitialization(new ActionInitialization(offload_mode));
+  runManager->SetNumberOfThreads(1);
+  runManager->Initialize();
+  auto *pm = G4OpticalPhoton::Definition()->GetProcessManager();
+  auto *pv = pm->GetProcessList();
 
-   // Process macro or start UI session
-   if ( ! ui )   // batch mode
-   {
-     G4String command = "/control/execute ";
-     G4String fileName = argv[2];
-     UImanager->ApplyCommand(command+fileName);
-   }
-   else           // interactive mode
-   {
-     G4String command = "/control/execute ";
-     G4String fileName = argv[3];
-     UImanager->ApplyCommand(command+fileName);
+  // Initialize visualization
+  G4VisManager *visManager = new G4VisExecutive;
+  visManager->Initialize();
 
-     UImanager->ApplyCommand("/control/execute vis.mac");
-     ui->SessionStart();
-     delete ui;
-   }
-   delete visManager;
-   delete runManager;
-   delete parser;
-   delete fReader;
+  // Get the pointer to the User Interface manager
+  G4UImanager *UImanager = G4UImanager::GetUIpointer();
+
+  // Process macro or start UI session
+  if (!ui) // batch mode
+  {
+    G4String command = "/control/execute ";
+    G4String fileName = argv[2];
+    UImanager->ApplyCommand(command + fileName);
+  }
+  else // interactive mode
+  {
+    G4String command = "/control/execute ";
+    G4String fileName = argv[3];
+    UImanager->ApplyCommand(command + fileName);
+
+    UImanager->ApplyCommand("/control/execute vis.mac");
+    ui->SessionStart();
+    delete ui;
+  }
+  delete visManager;
+  delete runManager;
+  delete parser;
+  delete fReader;
 }

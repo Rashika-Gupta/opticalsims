@@ -15,6 +15,8 @@
 #include "AnalysisManagerHelper.hh"
 
 #include "include/config.h"
+#include <accel/UserActionIntegration.hh>
+#include <corecel/sys/Environment.hh>
 
 #ifdef With_Opticks
 #include "SEvt.hh"
@@ -26,67 +28,82 @@ namespace
 }
 #endif
 
-EventAction::EventAction() : G4UserEventAction()
-{
-}
+EventAction::EventAction(std::string celer_offload_mode) : G4UserEventAction(), celer_offload_mode_(std::move(celer_offload_mode)) {}
+EventAction::~EventAction() {}
 
 EventAction::~EventAction()
 {
-}
-
-void EventAction::BeginOfEventAction(const G4Event* event)
-{
-    cout << "Begin event " << event->GetEventID() << endl;
-    startTime = std::chrono::high_resolution_clock::now();
-}
-
-void EventAction::EndOfEventAction(const G4Event* event)
-{
-    G4int evtID = event->GetEventID();
-    //auto analysisManager = G4AnalysisManager::Instance();
-
-
-#ifdef With_Opticks
-    // Force Single Thread
-    G4AutoLock lock(&opticks_mt);
-    OpticksHitHandler* hitHandler = OpticksHitHandler::getInstance();
-
-    // Adding here the photon production
-    int numSPhotons = hitHandler->GetSphotons().size();
-
-    // Simulate the Primary photons in GPU
-    if (numSPhotons > 0) hitHandler->PrimPhotonBatcher(evtID);
-
-    // Get event id and number of gensteps
-    G4int ngenstep = SEvt::GetNumGenstepFromGenstep(0);
-
-
-    if (ngenstep > 0)
-    {
-        std::cout << "Number of GenStep: " << ngenstep << std::endl;
-        std::cout << "Number of Photons: " << SEvt::GetNumPhotonCollected(0) << std::endl;
-        hitHandler->Simulate(evtID);
-    }
-#endif
-    // Instance for AnalysisHelper
-    auto duration = chrono::high_resolution_clock::now() - startTime;
-    auto EventTime = chrono::duration_cast<chrono::duration<double>>(duration).count();
-
-
-    // Save Opticks Hits
-#ifdef With_Opticks
-    hitHandler->SaveHits();
-#endif
-
-
-    // Save Photon Computation Time
-    anaHelper->SetDuration(EventTime);
-
-    // Save Photon info
-    anaHelper->SavePhotonInfotoFile();
-
-    /////// GEANT4 HITS ///////
-    anaHelper->SaveG4HitsToFile();
+    AnalysisManagerHelper *anaHelper = AnalysisManagerHelper::getInstance();
     anaHelper->Reset();
-    G4cout << "Event " << evtID << ", End Time " << EventTime << " seconds" << G4endl;
-}
+
+    if (celer_offload_mode_ == "optical-distribution")
+    {
+        celeritas::UserActionIntegration::Instance()
+            .BeginOfEventAction(event);
+    }
+
+    startTime = chrono::high_resolution_clock::now();
+
+    void EventAction::BeginOfEventAction(const G4Event *event)
+    {
+        cout << "Begin event " << event->GetEventID() << endl;
+        startTime = std::chrono::high_resolution_clock::now();
+    }
+
+    void EventAction::EndOfEventAction(const G4Event *event)
+    {
+        G4int evtID = event->GetEventID();
+        // auto analysisManager = G4AnalysisManager::Instance();
+
+#ifdef With_Opticks
+        // Force Single Thread
+        G4AutoLock lock(&opticks_mt);
+        OpticksHitHandler *hitHandler = OpticksHitHandler::getInstance();
+
+        // Adding here the photon production
+        int numSPhotons = hitHandler->GetSphotons().size();
+
+        // Simulate the Primary photons in GPU
+        if (numSPhotons > 0)
+            hitHandler->PrimPhotonBatcher(evtID);
+
+        // Get event id and number of gensteps
+        G4int ngenstep = SEvt::GetNumGenstepFromGenstep(0);
+
+        if (ngenstep > 0)
+        {
+            std::cout << "Number of GenStep: " << ngenstep << std::endl;
+            std::cout << "Number of Photons: " << SEvt::GetNumPhotonCollected(0) << std::endl;
+            hitHandler->Simulate(evtID);
+        }
+#endif
+        // Instance for AnalysisHelper
+        auto duration = chrono::high_resolution_clock::now() - startTime;
+        auto EventTime = chrono::duration_cast<chrono::duration<double>>(duration).count();
+
+        // Save Opticks Hits
+#ifdef With_Opticks
+        hitHandler->SaveHits();
+#endif
+
+        // Save Photon Computation Time
+        anaHelper->SetDuration(EventTime);
+
+        // Save Photon info
+        anaHelper->SavePhotonInfotoFile();
+
+        /////// GEANT4 HITS ///////
+        else
+        {
+            G4cout << "Calling G4 Hits" << G4endl;
+            anaHelper->SaveG4HitsToFile();
+        }
+
+        if (celer_offload_mode_ == "optical-distribution")
+        {
+            celeritas::UserActionIntegration::Instance()
+                .EndOfEventAction(event);
+        }
+
+        G4cout << "Event " << evtID << ", End Time " << EventTime << " seconds" << G4endl;
+    }

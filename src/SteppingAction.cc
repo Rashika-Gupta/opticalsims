@@ -8,23 +8,19 @@
 #include "ArapucaHit.hh"
 #include "G4Exception.hh"
 #include "include/config.h"
-SteppingAction::SteppingAction():G4UserSteppingAction()
+SteppingAction::SteppingAction() : G4UserSteppingAction()
 {
-    fDetectIds=anaHelper->GetDetectIds();
-
+    fDetectIds = anaHelper->GetDetectIds();
 }
 
 SteppingAction::~SteppingAction()
 {
-
 }
 
-
-
-void SteppingAction::UserSteppingAction(const G4Step* step)
+void SteppingAction::UserSteppingAction(const G4Step *step)
 {
     auto aTrack = step->GetTrack();
-    G4ParticleDefinition* pdef = aTrack->GetDefinition();
+    G4ParticleDefinition *pdef = aTrack->GetDefinition();
 
 #ifdef With_DEBUG
     // Collect the steps
@@ -32,31 +28,37 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 #endif
 
     // Early exit for non-optical photons
-    if (pdef != G4OpticalPhoton::Definition()) return;
+    if (pdef != G4OpticalPhoton::Definition())
+        return;
 
     // Get boundary process (cached)
-    G4OpBoundaryProcess* boundary = GetOpticalBoundaryProcess();
+    G4OpBoundaryProcess *boundary = GetOpticalBoundaryProcess();
 
-    if (!boundary) return;
+    if (!boundary)
+        return;
 
     G4OpBoundaryProcessStatus status = boundary->GetStatus();
 
     if (status == Detection)
     {
         G4int Procid = -1;
-        const G4VProcess* proc = aTrack->GetCreatorProcess();
+        const G4VProcess *proc = aTrack->GetCreatorProcess();
 
-        if (proc != nullptr) {
+        if (proc != nullptr)
+        {
             G4String processName = proc->GetProcessName();
-            if (processName == "Scintillation") Procid = 0;
-            else if (processName == "Cerenkov") Procid = 1;
+            if (processName == "Scintillation")
+                Procid = 0;
+            else if (processName == "Cerenkov")
+                Procid = 1;
             // add more if needed
         }
-        const G4StepPoint* postPoint = step->GetPostStepPoint();
+        const G4StepPoint *postPoint = step->GetPostStepPoint();
         G4String volName = postPoint->GetPhysicalVolume()->GetName();
 
         auto it = fDetectIds.find(volName);
-        if (it == fDetectIds.end()) return;
+        if (it == fDetectIds.end())
+            return;
 
         int Sid = it->second;
 
@@ -65,30 +67,30 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
             Procid,
             Sid,
             volName,
-            EtoWavelength(aTrack->GetTotalEnergy()/CLHEP::eV),
+            EtoWavelength(aTrack->GetTotalEnergy() / CLHEP::eV),
             aTrack->GetGlobalTime(),
             aTrack->GetPosition(),
             aTrack->GetMomentumDirection(),
-            aTrack->GetPolarization()
-        );
+            aTrack->GetPolarization());
 
         anaHelper->AddG4Hits(Hit);
     }
-
-
-
 }
 
 // Helper method
-G4OpBoundaryProcess* SteppingAction::GetOpticalBoundaryProcess()
+G4OpBoundaryProcess *SteppingAction::GetOpticalBoundaryProcess()
 {
-    G4OpBoundaryProcess* boundary = nullptr;
-    if (!boundary) {
-        G4ProcessVector* pv = G4OpticalPhoton::Definition()
-                              ->GetProcessManager()->GetProcessList();
-        for (size_t i = 0; i < pv->size(); ++i) {
-            if ((*pv)[i]->GetProcessName() == "OpBoundary") {
-                boundary = dynamic_cast<G4OpBoundaryProcess*>((*pv)[i]);
+    G4OpBoundaryProcess *boundary = nullptr;
+    if (!boundary)
+    {
+        G4ProcessVector *pv = G4OpticalPhoton::Definition()
+                                  ->GetProcessManager()
+                                  ->GetProcessList();
+        for (size_t i = 0; i < pv->size(); ++i)
+        {
+            if ((*pv)[i]->GetProcessName() == "OpBoundary")
+            {
+                boundary = dynamic_cast<G4OpBoundaryProcess *>((*pv)[i]);
                 break;
             }
         }
