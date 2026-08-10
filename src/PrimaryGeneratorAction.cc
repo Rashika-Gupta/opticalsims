@@ -32,6 +32,8 @@
 
 #include "PrimaryGeneratorAction.hh"
 #include "G4Event.hh"
+#include "G4Electron.hh"
+#include "G4Exception.hh"
 #include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
 #include "G4AnalysisManager.hh"
@@ -45,13 +47,16 @@
 #include "TFile.h"
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
+#include <cstdlib>
 #include <iostream>
+#include <string>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-PrimaryGeneratorAction::PrimaryGeneratorAction()
-    : G4VUserPrimaryGeneratorAction(),
-      fParticleGun(0), fmsg(nullptr), fFileName(""), finitParticleType("GPS"), fAmount(100)
+PrimaryGeneratorAction::PrimaryGeneratorAction(std::string celer_offload_mode)
+    : G4VUserPrimaryGeneratorAction(), celer_offload_mode_(std::move(celer_offload_mode)),
+      fParticleGun(0),
+      fmsg(nullptr), fFileName(""), finitParticleType("GPS"), fAmount(100)
 {
   fParticleGun = new G4ParticleGun(1);
   fParticleGun->SetParticleDefinition(G4OpticalPhoton::Definition());
@@ -83,41 +88,79 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
 {
+  static const std::vector<G4double> optical_energies = {
+      // 1.8785e-6 * MeV,
+      // 2.88625e-6 * MeV,
+      // 2.0e-06 * MeV,
+      // 3.21e-06 * MeV,
+      // 3.90205e-6 * MeV,
+      // 4.95070e-6 * MeV,
+      // 1.96760e-6 * MeV,
+      // 5.98475e-6 * MeV,
+      // 6.9e-6 * MeV,
+      // 7.55e-6 * MeV,
+      // 7.8e-6 * MeV,
+      // 8.0e-6 * MeV,
+      // 8.2e-6 * MeV,
+      // 8.5e-6 * MeV,
+      // 8.7e-6 * MeV,
+      // 8.9e-6 * MeV,
+      // 9.0e-6 * MeV,
+      // 9.1e-6 * MeV,
+      // 9.2e-6 * MeV,
+      // 9.49745e-6 * MeV,
+      // 9.69380e-6 * MeV,
+      // 9.85e-6 * MeV,
+      // 1.0e-5 * MeV,
+      // 1.03e-05 * MeV, 11.4736e-06 * MeV, 11.4849e-06 * MeV, 11.4962e-06 * MeV, 11.5075e-06 * MeV, 11.5188e-06 * MeV, 11.5302e-06 * MeV, 11.5416e-06 * MeV, 11.5530e-06 * MeV, 11.5644e-06 * MeV, 11.5758e-06 * MeV,
+      // 1e-06 * MeV, 2e-06 * MeV, 3e-06 * MeV, 4e-06 * MeV, 5e-06 * MeV, 6e-06 * MeV, 2e-07 * MeV
+      1.7e-06 * MeV,
+      2e-06 * MeV,
+      2.4e-06 * MeV,
+      2.7e-06 * MeV,
+      3.2e-06 * MeV,
+      3.4e-06 * MeV,
+      3.8e-06 * MeV,
+  };
+  constexpr G4double electron_energy = 50 * MeV;
 
-  static const std::vector<G4double> energies = {
-      1.8785e-6 * MeV,
-      2.88625e-6 * MeV,
-      2.0e-06 * MeV,
-      3.21e-06 * MeV,
-      3.90205e-6 * MeV,
-      4.95070e-6 * MeV,
-      1.96760e-6 * MeV,
-      5.98475e-6 * MeV,
-      6.9e-6 * MeV,
-      7.55e-6 * MeV,
-      7.8e-6 * MeV,
-      8.0e-6 * MeV,
-      8.2e-6 * MeV,
-      8.5e-6 * MeV,
-      8.7e-6 * MeV,
-      8.9e-6 * MeV,
-      9.0e-6 * MeV,
-      9.1e-6 * MeV,
-      9.2e-6 * MeV,
-      9.49745e-6 * MeV,
-      9.69380e-6 * MeV,
-      9.85e-6 * MeV,
-      1.0e-5 * MeV,
-      1.03e-05 * MeV, 11.4736e-06 * MeV, 11.4849e-06 * MeV, 11.4962e-06 * MeV, 11.5075e-06 * MeV, 11.5188e-06 * MeV, 11.5302e-06 * MeV, 11.5416e-06 * MeV, 11.5530e-06 * MeV, 11.5644e-06 * MeV, 11.5758e-06 * MeV};
-  auto id = anEvent->GetEventID();
+  if (celer_offload_mode_ == "optical-gun")
+  {
+    auto const event_id = static_cast<std::size_t>(anEvent->GetEventID());
+    if (event_id >= optical_energies.size())
+    {
+      return;
+    }
 
-  if (id >= energies.size())
+    fParticleGun->SetParticleDefinition(G4OpticalPhoton::Definition());
+    fParticleGun->SetParticleEnergy(optical_energies[event_id]);
+  }
+  else if (celer_offload_mode_ == "optical-distribution" || celer_offload_mode_ == "electron-photon" || celer_offload_mode_ == "optical-track")
+  {
+    // A charged primary is required to create scintillation/Cherenkov
+    // distribution data. In electron-photon mode the electron itself is also
+    // handed to Celeritas.
+    fParticleGun->SetParticleDefinition(G4Electron::Definition());
+    fParticleGun->SetParticleEnergy(electron_energy);
+    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., -1.));
+    fParticleGun->SetParticlePosition(G4ThreeVector(200., 300., 1000.));
+  }
+  else
+  {
+    G4ExceptionDescription description;
+    description << "Invalid OPTICALSIMS_CELERITAS_MODE='" << celer_offload_mode_
+                << "': expected 'optical-gun', 'optical-track', "
+                   "'optical-distribution', or 'electron-photon'";
+    G4Exception("PrimaryGeneratorAction::GeneratePrimaries",
+                "OpticalSims002",
+                FatalException,
+                description);
     return;
+  }
 
-  fParticleGun->SetParticleEnergy(energies[id]);
   fParticleGun->GeneratePrimaryVertex(anEvent);
 
-  return;
+  // return;
 
   if (finitParticleType == "GPS")
   {

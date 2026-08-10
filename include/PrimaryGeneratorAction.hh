@@ -54,7 +54,7 @@ class G4Event;
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
 public:
-  PrimaryGeneratorAction();
+  PrimaryGeneratorAction(std::string celer_offload_mode);
   ~PrimaryGeneratorAction();
   void GeneratePrimaries(G4Event *anEvent) override;
 #ifdef With_Opticks
@@ -72,6 +72,9 @@ private:
 #ifdef With_Opticks
   std::vector<sphoton> sphotons;
 #endif
+
+private:
+  std::string celer_offload_mode_;
 };
 
 #endif

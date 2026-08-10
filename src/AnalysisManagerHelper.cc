@@ -114,7 +114,6 @@ void AnalysisManagerHelper::SaveG4HitsToFile()
 void AnalysisManagerHelper::SaveCelerHitsToFile()
 {
     G4AnalysisManager *AnaMngr = G4AnalysisManager::Instance();
-    // Ntuple index 3 = "CeleritasHits" (already defined in RunAction)
     G4cout << "Saving " << fCelerHits.size() << " Celeritas hits to file..." << G4endl;
     for (auto const &hit : fCelerHits)
     {

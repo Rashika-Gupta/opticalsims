@@ -35,33 +35,33 @@
 #include "TrackingAction.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-ActionInitialization::ActionInitialization()
- : G4VUserActionInitialization()
-{}
+ActionInitialization::ActionInitialization(std::string celer_offload_mode)
+    : G4VUserActionInitialization(), celer_offload_mode_(std::move(celer_offload_mode))
+{
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 ActionInitialization::~ActionInitialization()
-{}
+{
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void ActionInitialization::BuildForMaster() const
 {
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void ActionInitialization::Build() const
 {
-    SetUserAction(new PrimaryGeneratorAction);
-    SetUserAction(new RunAction);
-    EventAction* eventAction = new EventAction;
+    SetUserAction(new PrimaryGeneratorAction(celer_offload_mode_));
+    SetUserAction(new RunAction(celer_offload_mode_));
+    EventAction *eventAction = new EventAction(celer_offload_mode_);
     SetUserAction(eventAction);
     SetUserAction(new SteppingAction());
     SetUserAction(new TrackingAction());
-
-}  
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

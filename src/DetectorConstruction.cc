@@ -101,14 +101,14 @@ void DetectorConstruction::ConstructSDandField()
   //------------------------------------------------
   // Sensitive detectors
   //------------------------------------------------
-  /*
-  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+  G4SDManager *SDman = G4SDManager::GetSDMpointer();
 
   G4String trackerChamberSDname = "PhotonSD";
-  SensitiveDetector* aTrackerSD =
-    new SensitiveDetector(trackerChamberSDname);
-  SDman->AddNewDetector( aTrackerSD );
-  */
+  SensitiveDetector *aTrackerSD =
+      new SensitiveDetector(trackerChamberSDname);
+  SDman->AddNewDetector(aTrackerSD);
+
   ///////////////////////////////////////////////////////////////////////
   //
   // Example how to retrieve Auxiliary Information for sensitive detector
@@ -121,124 +121,129 @@ void DetectorConstruction::ConstructSDandField()
   // The same as above, but now we are looking for
   // sensitive detectors setting them for the volumes
 
-  // for (G4GDMLAuxMapType::const_iterator iter = auxmap->begin();
-  //      iter != auxmap->end(); iter++)
-  //{
-  //   /*G4cout << "Volume " << ((*iter).first)->GetName()
-  //          << " has the following list of auxiliary information: "
-  //          << G4endl << G4endl;
-  //   */
-  //
-  //  for (G4GDMLAuxListType::const_iterator vit = (*iter).second.begin();
-  //       vit != (*iter).second.end(); vit++)
-  //  {
-  //    // myvol = (*iter).first;
-  //
-  //    // Surfaces
-  //    if ((*vit).type == "Surface")
-  //    {
-  //      // vol1=G4PhysicalVolumeStore::GetInstance()->GetVolume((*vit).value+"_PV");
-  //      // vol2=G4PhysicalVolumeStore::GetInstance()->GetVolume((*iter).first->GetName()+"_PV");
-  //      // new G4LogicalBorderSurface(((*iter).first->GetName()+"_"+(*vit).value+"_"+(*vit).type),vol1,vol2,ArapucaSurface);
-  //      new G4LogicalSkinSurface((*iter).first->GetName() + "_Surface", (*iter).first, ArapucaSurface);
-  //      count++;
-  //    }
-  //
-  //    if (((*vit).type == "PD" or (*vit).type == "SensDet") and (*vit).value == "PhotonDetector")
-  //    {
-  //      G4cout << "Attaching sensitive detector " << (*vit).value
-  //             << " to volume " << ((*iter).first)->GetName()
-  //             << G4endl << G4endl;
-  //      sensdet_map[(*vit).value].push_back((*iter).first);
-  //
-  //      /* G4VSensitiveDetector* mydet =SDman->FindSensitiveDetector((*vit).value);
-  //       if(mydet)
-  //       { */
-  //
-  //      // myvol->SetSensitiveDetector(mydet);
-  //      if (G4Threading::IsMasterThread())
-  //      {
-  //
-  //        std::string_view name = std::string_view((*iter).first->GetName().c_str(), (*iter).first->GetName().size());
-  //        std::vector<std::string_view> spfirst = Split(name, '_');
-  //        if (spfirst.size() > 1)
-  //        {
-  //          /*std::vector<std::string_view> spsecond=Split(spfirst[1],'-');
-  //          int first,second,third;
-  //          first=std::stoi(std::string(spsecond[2]));
-  //          second=std::stoi(std::string(spsecond[1]));
-  //          third=std::stoi(std::string(spsecond[0]));
-  //          sid=third*(10*4)+second*4+first;
-  //          */
-  //          fDetectIds.insert(std::pair<G4String, G4int>((*iter).first->GetName() + "_PV", sid++));
-  //        }
-  //        else
-  //        {
-  //          std::cout << "Warning: Can not generate detector ids from the name" << G4endl;
-  //          std::cout << "Opticks will use the copy number as sensitive detector id" << G4endl;
-  //          fDetectIds.insert(std::pair<G4String, G4int>((*iter).first->GetName() + "_PV", -99));
-  //        }
-  //      }
-  //      /*
-  //        }
-  //        else
-  //        {
-  //          G4cout << (*vit).value << " detector not found" << G4endl;
-  //        }
-  //        */
-  //    }
-  //    else if ((*vit).type == "Solid")
-  //    {
-  //      /*
-  //      if((*vit).value == "True")
-  //      {
-  //        G4VisAttributes* visatt = new G4VisAttributes(
-  //          ((*iter).first)->GetVisAttributes()->GetColour());
-  //        visatt->SetVisibility(true);
-  //        visatt->SetForceSolid(true);
-  //        visatt->SetForceAuxEdgeVisible(true);
-  //        ((*iter).first)->SetVisAttributes(visatt);
-  //
-  //        //((*iter).first)->SetUserLimits(limits);
-  //
-  //       }*/
-  //    }
-  //  }
-  //}
-  // aTrackerSD->SetDetectIds(&fDetectIds);
+  for (G4GDMLAuxMapType::const_iterator iter = auxmap->begin();
+       iter != auxmap->end(); iter++)
+  {
+    /*G4cout << "Volume " << ((*iter).first)->GetName()
+           << " has the following list of auxiliary information: "
+           << G4endl << G4endl;
+    */
+
+    for (G4GDMLAuxListType::const_iterator vit = (*iter).second.begin();
+         vit != (*iter).second.end(); vit++)
+    {
+      // myvol = (*iter).first;
+
+      // Surfaces
+      if ((*vit).type == "Surface")
+      {
+        // vol1=G4PhysicalVolumeStore::GetInstance()->GetVolume((*vit).value+"_PV");
+        // vol2=G4PhysicalVolumeStore::GetInstance()->GetVolume((*iter).first->GetName()+"_PV");
+        // new G4LogicalBorderSurface(((*iter).first->GetName()+"_"+(*vit).value+"_"+(*vit).type),vol1,vol2,ArapucaSurface);
+        new G4LogicalSkinSurface((*iter).first->GetName() + "_Surface", (*iter).first, ArapucaSurface);
+        count++;
+      }
+
+      if (((*vit).type == "PD" or (*vit).type == "SensDet") and (*vit).value == "PhotonDetector")
+      {
+        G4cout << "Attaching sensitive detector " << (*vit).value
+               << " to volume " << ((*iter).first)->GetName()
+               << G4endl << G4endl;
+        sensdet_map[(*vit).value].push_back((*iter).first);
+
+        /* G4VSensitiveDetector* mydet =SDman->FindSensitiveDetector((*vit).value);
+         if(mydet)
+         { */
+
+        // myvol->SetSensitiveDetector(mydet);
+        if (G4Threading::IsMasterThread())
+        {
+
+          std::string_view name = std::string_view((*iter).first->GetName().c_str(), (*iter).first->GetName().size());
+          std::vector<std::string_view> spfirst = Split(name, '_');
+          if (spfirst.size() > 1)
+          {
+            /*std::vector<std::string_view> spsecond=Split(spfirst[1],'-');
+            int first,second,third;
+            first=std::stoi(std::string(spsecond[2]));
+            second=std::stoi(std::string(spsecond[1]));
+            third=std::stoi(std::string(spsecond[0]));
+            sid=third*(10*4)+second*4+first;
+            */
+            fDetectIds.insert(std::pair<G4String, G4int>((*iter).first->GetName() + "_PV", sid++));
+          }
+          else
+          {
+            std::cout << "Warning: Can not generate detector ids from the name" << G4endl;
+            std::cout << "Opticks will use the copy number as sensitive detector id" << G4endl;
+            fDetectIds.insert(std::pair<G4String, G4int>((*iter).first->GetName() + "_PV", -99));
+          }
+        }
+        /*
+          }
+          else
+          {
+            G4cout << (*vit).value << " detector not found" << G4endl;
+          }
+          */
+      }
+      else if ((*vit).type == "Solid")
+      {
+        /*
+        if((*vit).value == "True")
+        {
+          G4VisAttributes* visatt = new G4VisAttributes(
+            ((*iter).first)->GetVisAttributes()->GetColour());
+          visatt->SetVisibility(true);
+          visatt->SetForceSolid(true);
+          visatt->SetForceAuxEdgeVisible(true);
+          ((*iter).first)->SetVisAttributes(visatt);
+
+          //((*iter).first)->SetUserLimits(limits);
+
+         }*/
+      }
+    }
+  }
+  aTrackerSD->SetDetectIds(&fDetectIds);
   // --------------------------------------------------------------------------
   // Attach  sensitive detectors
   // --------------------------------------------------------------------------
   // Map: SensDet name -> list of logical volumes
 
+  //------------------------------------------//
+  //------ Attaching SDs for Celeritas--------//
+  //------------------------------------------//
   G4SDManager *sdman = G4SDManager::GetSDMpointer();
-  // for (auto &[sd_name, volumes] : sensdet_map)
-  //{
-  //   auto *sd = new GdmlSensitiveDetector(sd_name);
-  //   sdman->AddNewDetector(sd);
-  //   for (auto *lv : volumes)
-  //   {
-  //     lv->SetSensitiveDetector(sd);
-  //   }
-  // }
-  auto *sd = new GdmlSensitiveDetector("LArDetector");
-  sdman->AddNewDetector(sd);
-
-  for (auto *lv : *G4LogicalVolumeStore::GetInstance())
+  for (auto &[sd_name, volumes] : sensdet_map)
   {
-    auto *mat = lv->GetMaterial();
-
-    if (mat && mat->GetName() == "LAr")
+    std::cout << "Attaching sensitive detector " << sd_name
+              << " to " << volumes.size() << " volumes" << std::endl;
+    auto *sd = new GdmlSensitiveDetector(sd_name);
+    sdman->AddNewDetector(sd);
+    for (auto *lv : volumes)
     {
-      G4cout << "Attach SD -> "
-             << lv->GetName()
-             << G4endl;
-
       lv->SetSensitiveDetector(sd);
     }
   }
+  // auto *sd = new GdmlSensitiveDetector("LArDetector");
+  // sdman->AddNewDetector(sd);
+
+  // for (auto *lv : *G4LogicalVolumeStore::GetInstance())
+  //{
+  //   auto *mat = lv->GetMaterial();
+  //
+  //  if (mat && mat->GetName() == "LAr")
+  //  {
+  //    G4cout << "Attach SD -> "
+  //           << lv->GetName()
+  //           << G4endl;
+  //
+  //    lv->SetSensitiveDetector(sd);
+  //  }
+  //}
+
   anaHelper->SetDetectIds(&fDetectIds);
-  // G4cout<<"Detector construction sensor surface count " << count <<G4endl;
 
   // Pass the World Volume to Opticks
 #ifdef With_Opticks

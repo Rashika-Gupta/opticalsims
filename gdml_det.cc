@@ -56,14 +56,18 @@
 #include "Randomize.hh"
 // Opticks related header files
 #include "G4OpticalPhysicsOpticks.hh"
-
 #ifdef With_Opticks
 #include "SEventConfig.hh"
 #include "OPTICKS_LOG.hh"
 #include <cuda_runtime.h>
 #endif
+
+// Celeritas related header files
+#include <accel/SharedParams.hh>
 #include <accel/TrackingManagerConstructor.hh>
 #include <accel/TrackingManagerIntegration.hh>
+#include <accel/UserActionIntegration.hh>
+#include <corecel/sys/Environment.hh>
 
 #include "MakeCelerOptions.hh"
 
@@ -112,34 +116,51 @@ int main(int argc, char **argv)
   }
 
   auto *runManager = G4RunManagerFactory::CreateRunManager(G4RunManagerType::Serial);
+  setenv("OPTICALSIMS_CELERITAS_MODE", DEFAULT_OFFLOAD_MODE, 0);
+  std::string const &offload_mode = celeritas::getenv("OPTICALSIMS_CELERITAS_MODE");
 
   // Physics list
-  G4VModularPhysicsList *physics_list = new PhysicsList();
+  // Physics List owns all optical-process configurations
+  G4VModularPhysicsList *physics_list = new PhysicsList(offload_mode);
 
 #ifdef With_Opticks
   std::cout << "Defining Opticks Physics List" << std::endl;
   physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
-#else
-  auto opticalPhysics = new G4OpticalPhysics(true);
-  auto opticalParams = G4OpticalParameters::Instance();
-  opticalParams->SetProcessActivation("Cerenkov", false);
-  // opticalParams->SetProcessActivation("OpAbsorption", false);
-  opticalParams->SetProcessActivation("OpRayleigh", false);
-  opticalParams->SetProcessActivation("OpMieHG", false);
-  opticalParams->SetProcessActivation("OpWLS", false);
-  opticalParams->SetProcessActivation("OpWLS2", false);
-  // opticalParams->SetProcessActivation("OpBoundary", false);
-  physics_list->RegisterPhysics(opticalPhysics);
 #endif
+  auto const celeritas_mode = celeritas::SharedParams::GetMode();
 
-  auto &tmi = celeritas::TrackingManagerIntegration::Instance();
-  physics_list->RegisterPhysics(new celeritas::TrackingManagerConstructor(&tmi));
-  tmi.SetOptions(MakeCelerOptions());
+  if (offload_mode == "optical-distribution")
+  {
+    // Optical generation data is offloaded through user actions
+    auto &uai = celeritas::UserActionIntegration::Instance();
+
+    uai.SetOptions(MakeCelerOptions(offload_mode));
+    if (uai.GetMode() != celeritas::OffloadMode::enabled)
+    {
+      G4cerr
+          << "Configuration error: optical-distribution requires "
+             "Celeritas transport, but Celeritas is disabled."
+          << G4endl;
+      return 1;
+    }
+  }
+  else
+  { // Geant4 tracks are offloaded through the tracking manager
+    G4cout << "Entering here" << std::endl;
+    auto &tmi = celeritas::TrackingManagerIntegration::Instance();
+    // check status of tmi if celeritas or geant4
+    G4cout << "TrackingManagerIntegration::Instance().GetMode() = " << static_cast<int>(tmi.GetMode()) << std::endl;
+    physics_list->RegisterPhysics(
+        new celeritas::TrackingManagerConstructor(&tmi));
+
+    tmi.SetOptions(MakeCelerOptions(offload_mode));
+  }
+
   runManager->SetUserInitialization(physics_list);
 
   // User action initialization
   runManager->SetUserInitialization(new DetectorConstruction(parser));
-  runManager->SetUserInitialization(new ActionInitialization());
+  runManager->SetUserInitialization(new ActionInitialization(offload_mode));
   runManager->SetNumberOfThreads(1);
   runManager->Initialize();
   auto *pm = G4OpticalPhoton::Definition()->GetProcessManager();
