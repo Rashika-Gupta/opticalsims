@@ -20,7 +20,7 @@
 #include "G4Positron.hh"
 #include "G4OpticalPhysics.hh"
 #include "G4OpticalParameters.hh"
-
+#include <accel/SharedParams.hh>
 // Celertias offload
 #include "accel/gen/CherenkovOffload.hh"
 #include "accel/gen/ScintillationOffload.hh"
@@ -29,9 +29,9 @@ PhysicsList::PhysicsList(G4String const &offloadMode) : FTFP_BERT_HP()
 {
     // check if celeritas is enabled or not
 
-    if (offloadMode == "optical-distribution")
+    if (offloadMode == "optical-distribution" && celeritas::SharedParams::GetMode() == celeritas::OffloadMode::enabled)
     {
-        std::cout << "Setting up Celeritas optical distribution offload" << std::endl;
+
         RegisterPhysics(new celeritas::SupportedOpticalPhysics(physics_options()));
     }
     else

@@ -15,6 +15,7 @@ public:
     explicit PhysicsList(G4String const &offloadMode);
 
     virtual ~PhysicsList() noexcept;
+    void ConstructProcess() override;
 
 private:
     celeritas::GeantOpticalPhysicsOptions optical_options() const;

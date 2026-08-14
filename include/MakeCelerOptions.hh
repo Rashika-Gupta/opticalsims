@@ -25,7 +25,9 @@
 #include <G4EventManager.hh>
 #include <string>
 #include <vector>
-
+#include "geocel/GeantGeoParams.hh"
+#include "geocel/g4/Convert.hh"
+#include "G4VPhysicalVolume.hh"
 #include <celeritas/Quantities.hh>
 
 struct OffloadConfiguration
@@ -84,26 +86,33 @@ inline void RecordOpticalHits(
         G4EventManager::GetEventManager()
             ->GetConstCurrentEvent();
     CELER_EXPECT(event);
+    auto geant_geo = celeritas::global_geant_geo().lock();
+    CELER_VALIDATE(geant_geo, << "Geant4 geometry mapping is unavailable");
+
+    // auto *sensor_ids =
+    //     AnalysisManagerHelper::getInstance()->GetDetectIds();
 
     std::vector<CelerOpticalHit> celer_hits;
     celer_hits.reserve(hits.size());
 
     for (auto const &hit : hits)
     {
-        CELER_LOG(debug)
-            << "Celeritas optical hit: "
-            << "detector=" << hit.detector
-            << ", pos=" << hit.position
-            << ", time=" << hit.time
-            << ", energy=" << value_as<MevEnergy>(hit.energy);
         CelerOpticalHit h{};
+        h.celer_detector_id = hit.detector
+                                  ? static_cast<int>(hit.detector.unchecked_get())
+                                  : -1;
 
-        h.detector_id =
-            hit.detector
-                ? static_cast<int>(
-                      hit.detector.unchecked_get())
-                : -1;
+        h.primary_id = hit.primary
+                           ? static_cast<int>(hit.primary.unchecked_get())
+                           : -1;
 
+        h.volume_instance_id = hit.volume_instance
+                                   ? static_cast<int>(hit.volume_instance.unchecked_get())
+                                   : -1;
+
+        h.unique_instance_id = hit.unique_instance
+                                   ? hit.unique_instance.unchecked_get()
+                                   : 0;
         h.event_id = event->GetEventID();
         h.x = static_cast<float>(hit.position[0]);
         h.y = static_cast<float>(hit.position[1]);
@@ -114,11 +123,24 @@ inline void RecordOpticalHits(
         // Convert MeV to nm: E[eV] = 1239.8 / lambda[nm]
         float energy_ev = h.energy_mev * 1e6f;
         h.wavelength_nm = (energy_ev > 0) ? (1239.8f / energy_ev) : -1.f;
+        auto const *physical =
+            geant_geo->id_to_geant(hit.volume_instance);
+
+        h.sensor_name = physical->GetName();
+
+        // auto sid = sensor_id->find(h.sensor_name);
+        // if (sid == sensor_id->end())
+        //     continue; // match G4's "discard unknown volume" behavior
+        // h.sensor_id = sid->second;
         celer_hits.push_back(h);
     }
-
-    AnalysisManagerHelper::getInstance()
-        ->AddCelerHits(celer_hits);
+    if (anaHelper)
+    {
+        CELER_LOG(debug)
+            << "Adding " << celer_hits.size()
+            << " Celeritas optical hits to analysis manager";
+        anaHelper->AddCelerHits(celer_hits);
+    }
 
     CELER_LOG(debug)
         << "Received " << hits.size()

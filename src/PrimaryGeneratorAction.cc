@@ -44,6 +44,7 @@
 #include "G4GenericMessenger.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4PrimaryParticle.hh"
+#include "G4ParticleGun.hh"
 #include "G4PhysicalConstants.hh"
 #include "G4RandomTools.hh"
 #include "TFile.h"
@@ -69,8 +70,14 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(std::string celer_offload_mode)
       fParticleGun(0),
       fmsg(nullptr), fFileName(""), finitParticleType("GPS"), fAmount(2), fPosition(G4ThreeVector(-314 * cm, 72 * cm, 290 * cm)), fMom(9.7 * eV), fSigmaMom(0.1 * eV), fPhotonAmount({0.25, 25, 11}), fVerbose(false), fGPUPhotonType("Sphoton")
 {
-  // G4int n_particle = 1;
+  // if (celer_offload_mode_ != 0)
+  // {
+  //    fParticleGun = new G4ParticleGun(1);
+  // }
+  // else
+  // {
   fParticleGun = new G4GeneralParticleSource();
+  // // }
   fmsg = new G4GenericMessenger(this, "/PrimaryGenerationAction/input/", "");
   fmsg->DeclareProperty("type", finitParticleType, "Initial Particle Type: LArSoft or GPS (Default)");
   fmsg->DeclareProperty("file", fFileName, "File Name to Read");
@@ -156,8 +163,10 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
       3.4e-06 * MeV,
       3.8e-06 * MeV,
   };
-  constexpr G4double electron_energy = 50 * MeV;
-
+  constexpr G4double electron_energy = 5 * MeV;
+  // G4GeneralParticleSource owns a G4SingleParticleSource.
+  // Configure that source according to the selected Celeritas mode.
+  auto *source = fParticleGun->GetCurrentSource();
   if (celer_offload_mode_ == "optical-gun")
   {
     auto const event_id = static_cast<std::size_t>(anEvent->GetEventID());
@@ -165,19 +174,42 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
     {
       return;
     }
+    // Generate a primary optical photon. The tracking-manager
+    // integration transfers this optical track to Celeritas.
+    fParticleGun->SetParticleDefinition(
+        G4OpticalPhoton::Definition());
+    source->GetEneDist()->SetEnergyDisType("Mono");
+    source->GetEneDist()->SetMonoEnergy(
+        optical_energies[event_id]);
 
-    fParticleGun->SetParticleDefinition(G4OpticalPhoton::Definition());
-    fParticleGun->SetParticleEnergy(optical_energies[event_id]);
+    source->GetPosDist()->SetPosDisType("Point");
+    source->GetPosDist()->SetCentreCoords(
+        G4ThreeVector(0., 0., 0.));
+
+    source->GetAngDist()->SetAngDistType("planar");
+    source->GetAngDist()->SetParticleMomentumDirection(
+        G4ThreeVector(0., 0., 1.));
   }
   else if (celer_offload_mode_ == "optical-distribution" || celer_offload_mode_ == "electron-photon" || celer_offload_mode_ == "optical-track")
   {
-    // A charged primary is required to create scintillation/Cherenkov
-    // distribution data. In electron-photon mode the electron itself is also
-    // handed to Celeritas.
-    fParticleGun->SetParticleDefinition(G4Electron::Definition());
-    fParticleGun->SetParticleEnergy(electron_energy);
-    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., -1.));
-    fParticleGun->SetParticlePosition(G4ThreeVector(200., 300., 1000.));
+    // Generate a charged primary. The selected mode determines
+    // whether the electron, optical tracks, or optical-generation
+    // distributions are sent to Celeritas.
+    std::cout << "Generating primary electron for event " << anEvent->GetEventID();
+    fParticleGun->SetParticleDefinition(
+        G4Electron::Definition());
+
+    source->GetEneDist()->SetEnergyDisType("Mono");
+    source->GetEneDist()->SetMonoEnergy(
+        electron_energy);
+
+    source->GetAngDist()->SetAngDistType("planar");
+    source->GetAngDist()->SetParticleMomentumDirection(
+        G4ThreeVector(0., 0., -1.));
+
+    source->GetPosDist()->SetPosDisType("Point");
+    source->GetPosDist()->SetCentreCoords(
+        G4ThreeVector(200., 300., 1000.));
   }
   else
   {

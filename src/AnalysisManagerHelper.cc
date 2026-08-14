@@ -81,6 +81,7 @@ void AnalysisManagerHelper::Reset()
     fbatchID = 0;
     ArapucaHits.clear();
     ArapucaHits.shrink_to_fit();
+    ResetCelerHits();
 }
 void AnalysisManagerHelper::SavePhotonInfotoFile()
 {
@@ -88,14 +89,14 @@ void AnalysisManagerHelper::SavePhotonInfotoFile()
     G4AnalysisManager *AnaMngr = G4AnalysisManager::Instance();
     auto run = G4RunManager::GetRunManager();
     G4int eventID = run->GetCurrentEvent()->GetEventID();
-    AnaMngr->FillNtupleIColumn(3, 0, G4ScintPhotons);
-    AnaMngr->FillNtupleIColumn(3, 1, G4CerenkovPhotons);
-    AnaMngr->FillNtupleIColumn(3, 2, OpticksScintPhotons);
-    AnaMngr->FillNtupleIColumn(3, 3, OpticksCerenkovPhotons);
-    AnaMngr->FillNtupleDColumn(3, 4, Duration);
-    AnaMngr->FillNtupleIColumn(3, 5, eventID);
-    AnaMngr->FillNtupleIColumn(3, 6, fbatchID);
-    AnaMngr->AddNtupleRow(3);
+    AnaMngr->FillNtupleIColumn(4, 0, G4ScintPhotons);
+    AnaMngr->FillNtupleIColumn(4, 1, G4CerenkovPhotons);
+    AnaMngr->FillNtupleIColumn(4, 2, OpticksScintPhotons);
+    AnaMngr->FillNtupleIColumn(4, 3, OpticksCerenkovPhotons);
+    AnaMngr->FillNtupleDColumn(4, 4, Duration);
+    AnaMngr->FillNtupleIColumn(4, 5, eventID);
+    AnaMngr->FillNtupleIColumn(4, 6, fbatchID);
+    AnaMngr->AddNtupleRow(4);
 }
 
 void AnalysisManagerHelper::SaveG4HitsToFile()
@@ -127,7 +128,7 @@ void AnalysisManagerHelper::SaveParticleSteps(const G4Step *step)
     G4AnalysisManager *AnaMngr = G4AnalysisManager::Instance();
     auto run = G4RunManager::GetRunManager();
     G4int eventID = run->GetCurrentEvent()->GetEventID();
-    int id = 4;
+    int id = 5;
     AnaMngr->FillNtupleIColumn(id, 0, eventID);
     AnaMngr->FillNtupleIColumn(id, 1, step->GetTrack()->GetTrackID());
     AnaMngr->FillNtupleDColumn(id, 2, step->GetTrack()->GetPosition().getX());
@@ -155,16 +156,16 @@ void AnalysisManagerHelper::SaveCelerHitsToFile()
     {
 
         AnaMngr->FillNtupleIColumn(3, 0, hit.event_id);
-        AnaMngr->FillNtupleIColumn(3, 1, hit.detector_id); // SensorID
-        AnaMngr->FillNtupleSColumn(3, 2, "Dummy");         // SensorName
+        AnaMngr->FillNtupleIColumn(3, 1, hit.sensor_id);   // SensorID
+        AnaMngr->FillNtupleSColumn(3, 2, hit.sensor_name); // SensorName
         AnaMngr->FillNtupleDColumn(3, 3, hit.x);
         AnaMngr->FillNtupleDColumn(3, 4, hit.y);
         AnaMngr->FillNtupleDColumn(3, 5, hit.z);
         AnaMngr->FillNtupleDColumn(3, 6, hit.t);
         AnaMngr->FillNtupleDColumn(3, 7, hit.wavelength_nm);
-        AnaMngr->FillNtupleIColumn(3, 8, hit.track_id);
-        AnaMngr->FillNtupleIColumn(3, 9, hit.num_steps);
-        AnaMngr->FillNtupleDColumn(3, 10, hit.path_length);
+        //        AnaMngr->FillNtupleIColumn(3, 8, hit.track_id);
+        //        AnaMngr->FillNtupleIColumn(3, 9, hit.num_steps);
+        //        AnaMngr->FillNtupleDColumn(3, 10, hit.path_length);
         AnaMngr->AddNtupleRow(3);
     }
     ResetCelerHits();

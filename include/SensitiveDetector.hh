@@ -43,32 +43,32 @@ class G4Step;
 /// Sensitive detector to be attached to the GDML geometry
 using namespace std;
 
-
 class SensitiveDetector : public G4VSensitiveDetector
 {
-  public:
-      SensitiveDetector(const G4String&);
-     ~SensitiveDetector();
+public:
+    SensitiveDetector(const G4String &);
+    ~SensitiveDetector();
 
-      virtual void Initialize(G4HCofThisEvent*);
-      virtual G4bool ProcessHits(G4Step*, G4TouchableHistory*);
-      virtual void EndOfEvent(G4HCofThisEvent*);
-      void SetDetectIds(std::map<G4String,G4int> * fIDs);
+    virtual void Initialize(G4HCofThisEvent *);
+    virtual G4bool ProcessHits(G4Step *, G4TouchableHistory *);
+    virtual void EndOfEvent(G4HCofThisEvent *);
+    void SetDetectIds(std::map<G4String, G4int> *fIDs);
 
 private:
     G4int fHCid{0};
-    ArapucaHitsCollection* fArapucaHitsCollection{ 0 };
-    std::map<G4String,G4int> * fDetectIds;
+    ArapucaHitsCollection *fArapucaHitsCollection{0};
+    std::map<G4String, G4int> *fDetectIds;
 };
-inline G4double EtoWavelength(G4double E)
+
+inline G4double EtoWavelengthNM(G4double E)
 {
     // input photon energy in eV
     // return wavelength in nm:
     // Wavelength = h*c/e
-    return ((CLHEP::h_Planck*CLHEP::c_light) / (CLHEP::eV * CLHEP::nm)) / E;
+    return ((CLHEP::h_Planck * CLHEP::c_light) / (CLHEP::eV * CLHEP::nm)) / E;
 }
-inline void SensitiveDetector::SetDetectIds(std::map<G4String, G4int> *fIDs) {
-    fDetectIds=fIDs;
+inline void SensitiveDetector::SetDetectIds(std::map<G4String, G4int> *fIDs)
+{
+    fDetectIds = fIDs;
 }
 #endif
-

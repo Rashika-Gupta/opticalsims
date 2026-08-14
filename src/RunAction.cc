@@ -23,30 +23,6 @@ RunAction::~RunAction()
 
 void RunAction::BeginOfRunAction(const G4Run *run)
 {
-    auto *mpt = G4Material::GetMaterial("LAr")->GetMaterialPropertiesTable();
-    auto *groupvel_table = mpt->GetProperty(kGROUPVEL);
-    auto *rindex_table = mpt->GetProperty(kRINDEX);
-    // ── Dump GROUPVEL table to JSONL ──────────────────────────────────────
-    std::ofstream out("gdml-group-vel-g4.jsonl");
-    out << std::scientific << std::setprecision(8);
-    // Header record — identifies the source
-    for (size_t i = 0; i < groupvel_table->GetVectorLength(); ++i)
-    {
-        G4double E = groupvel_table->Energy(i); // MeV
-        G4double vg = (*groupvel_table)[i];     // mm/ns
-        G4double n = rindex_table->Value(E);
-
-        nlohmann::json rec;
-        rec["i"] = i;
-        rec["E_MeV"] = E;
-        rec["n"] = n;
-        rec["vg_over_c"] = vg / CLHEP::c_light;
-        rec["vphase_over_c"] = 1.0 / n;
-
-        out << rec.dump() << "\n";
-    }
-    CELER_LOG(info) << "GROUPVEL table written to gdml-group-vel-g4.jsonl (" << groupvel_table->GetVectorLength() << " entries)";
-    // std::string const &offloadmode = celeritas::getenv("OPTICALSIMS_CELERITAS_MODE");
 
     if (celer_offload_mode_ == "optical-distribution")
     {
@@ -62,11 +38,10 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     // ─────────────────────────────────────────────────────────────────────
 
     // Get the analysis manager
-    auto analysisManager = G4AnalysisManager::Instance();
+    auto *analysisManager = G4AnalysisManager::Instance();
     analysisManager->SetNtupleMerging(true); // 🔴 REQUIRED for MT merging
     analysisManager->SetFileName(fFileName); // base name, no _t0 etc.
 
-    G4AnalysisManager *analysisManager = G4AnalysisManager::Instance();
     // Open an output file
     std::string transport = celeritas::getenv("CELER_DISABLE") == "1"
                                 ? "geant4"
@@ -117,6 +92,21 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     analysisManager->CreateNtupleIColumn("ProcessID");
     analysisManager->FinishNtuple();
 
+    // Celeritas Hits
+    analysisManager->CreateNtuple("CeleritasHits", "Celeritas Hits");
+    analysisManager->CreateNtupleIColumn("evtID");
+    analysisManager->CreateNtupleIColumn("SensorID");
+    analysisManager->CreateNtupleSColumn("SensorName");
+    analysisManager->CreateNtupleDColumn("x");
+    analysisManager->CreateNtupleDColumn("y");
+    analysisManager->CreateNtupleDColumn("z");
+    analysisManager->CreateNtupleDColumn("t");
+    analysisManager->CreateNtupleDColumn("wavelength");
+    analysisManager->CreateNtupleIColumn("trackID");
+    analysisManager->CreateNtupleIColumn("numSteps");
+    analysisManager->CreateNtupleDColumn("pathLength");
+    analysisManager->FinishNtuple();
+
     // PhotonInfo
     analysisManager->CreateNtuple("PhotonInfo", "PhotonInfo");
     analysisManager->CreateNtupleIColumn("G4ScintPhotons");
@@ -149,7 +139,6 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     analysisManager->FinishNtuple();
 #endif
 
-    analysisManager->OpenFile();
     startTime = chrono::high_resolution_clock::now();
     RunTime = 0;
     G4cout << "### Run started ###" << G4endl;
@@ -184,8 +173,8 @@ void RunAction::EndOfRunAction(const G4Run *run)
 
                 auto const &accum = optical_collector->optical_state(local.GetState()).accum();
 
-                G4cout << "Celeritas generated " << accum.steps
-                       << " optical photons" << "\n";
+                // /    G4cout << "Celeritas accumulates " << accum.steps
+                // /           << " optical photons" << "\n";
             }
             auto counter_stats = optical_collector->exchange_counters(local.GetState().aux());
             size_t total_photons_generated = 0;
@@ -193,8 +182,7 @@ void RunAction::EndOfRunAction(const G4Run *run)
             {
                 total_photons_generated += gen_counters.num_generated;
             }
-            G4cout << "Celeritas generated " << total_photons_generated
-                   << " optical photons (generated)\n";
+            G4cout << "Celeritas generated " << total_photons_generated << " optical photons " << "\n";
             // Write Celeritas diagnostics to ROOT file
             std::ostringstream diagnostics;
             tmi.GetParams().output_reg()->output(&diagnostics);
@@ -213,6 +201,7 @@ void RunAction::EndOfRunAction(const G4Run *run)
 
     if (celer_offload_mode_ == "optical-distribution")
     {
+        std::cout << "Eding RunAction for optical-distribution mode" << std::endl;
         celeritas::UserActionIntegration::Instance()
             .EndOfRunAction(run);
     }

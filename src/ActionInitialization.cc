@@ -52,7 +52,7 @@ ActionInitialization::~ActionInitialization()
 
 void ActionInitialization::BuildForMaster() const
 {
-    SetUserAction(new RunAction);
+    SetUserAction(new RunAction(celer_offload_mode_));
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

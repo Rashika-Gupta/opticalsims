@@ -35,21 +35,21 @@
 #include "G4ThreeVector.hh"
 #include "G4SDManager.hh"
 #include "G4ios.hh"
-#include  "G4AnalysisManager.hh"
+#include "G4AnalysisManager.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4Track.hh"
 #include "G4VHit.hh"
 #include "G4VProcess.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SensitiveDetector::SensitiveDetector(const G4String& name)
-  : G4VSensitiveDetector(name)
+SensitiveDetector::SensitiveDetector(const G4String &name)
+    : G4VSensitiveDetector(name)
 {
     G4String name_HC = name + "_HitCollection";
     collectionName.insert(name_HC);
     G4cout << collectionName.size() << " Detector name:  " << name
            << " collection Name: " << name_HC << G4endl;
-    fHCid   = -1;
+    fHCid = -1;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -60,10 +60,10 @@ SensitiveDetector::~SensitiveDetector()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SensitiveDetector::Initialize(G4HCofThisEvent* G4hc)
+void SensitiveDetector::Initialize(G4HCofThisEvent *G4hc)
 {
-   fArapucaHitsCollection = new ArapucaHitsCollection(SensitiveDetectorName,collectionName[0]);
-   if(fHCid < 0)
+    fArapucaHitsCollection = new ArapucaHitsCollection(SensitiveDetectorName, collectionName[0]);
+    if (fHCid < 0)
     {
         fHCid = G4SDManager::GetSDMpointer()->GetCollectionID(collectionName[0]);
     }
@@ -72,42 +72,44 @@ void SensitiveDetector::Initialize(G4HCofThisEvent* G4hc)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4bool SensitiveDetector::ProcessHits(G4Step* aStep, G4TouchableHistory*th)
+G4bool SensitiveDetector::ProcessHits(G4Step *aStep, G4TouchableHistory *th)
 {
-
 
     // Only Optical Photons
     auto aTrack = aStep->GetTrack();
 
-    if (aTrack->GetParticleDefinition()!=G4OpticalPhoton::OpticalPhoton())  return false;
-    //auto analysisManager = G4AnalysisManager::Instance();
+    if (aTrack->GetParticleDefinition() != G4OpticalPhoton::OpticalPhoton())
+        return false;
+    // auto analysisManager = G4AnalysisManager::Instance();
 
-    G4String detectName=aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName();
+    G4String detectName = aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName();
     G4ThreeVector PPosition = aTrack->GetPosition();
     G4ThreeVector PMomentDir = aTrack->GetMomentumDirection();
     G4ThreeVector PPolar = aTrack->GetPolarization();
-    G4double time=aTrack->GetGlobalTime();
+    G4double time = aTrack->GetGlobalTime();
 
-    G4double Wavelength=EtoWavelength(aTrack->GetTotalEnergy()/CLHEP::eV);
+    G4double Wavelength = EtoWavelengthNM(aTrack->GetTotalEnergy() / CLHEP::eV);
     G4String processName;
-    G4int Procid=-1;
-    G4int Sid=-1;
-    auto it =fDetectIds->find(detectName);
-    if(it != fDetectIds->end()){
-        Sid=it->second ;
+    G4int Procid = -1;
+    G4int Sid = -1;
+    auto it = fDetectIds->find(detectName);
+    if (it != fDetectIds->end())
+    {
+        Sid = it->second;
     }
-    assert(Sid!=-1);
-    const G4VProcess * proc=aTrack->GetCreatorProcess();
+    assert(Sid != -1);
+    const G4VProcess *proc = aTrack->GetCreatorProcess();
 
-    if (proc!=NULL) processName=proc->GetProcessName();
-    else processName="None";
-    if (processName.compare("Scintillation")==0)  Procid=0;
-    else if (processName.compare("Cerenkov")==0)  Procid=1;
+    if (proc != NULL)
+        processName = proc->GetProcessName();
+    else
+        processName = "None";
+    if (processName.compare("Scintillation") == 0)
+        Procid = 0;
+    else if (processName.compare("Cerenkov") == 0)
+        Procid = 1;
 
-
-
-
-    ArapucaHit *Hit= new ArapucaHit(Procid,Sid,detectName,Wavelength,time,PPosition,PMomentDir,PPolar);
+    ArapucaHit *Hit = new ArapucaHit(Procid, Sid, detectName, Wavelength, time, PPosition, PMomentDir, PPolar);
     fArapucaHitsCollection->insert(Hit);
     aTrack->SetTrackStatus(fStopAndKill);
 
@@ -116,6 +118,6 @@ G4bool SensitiveDetector::ProcessHits(G4Step* aStep, G4TouchableHistory*th)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SensitiveDetector::EndOfEvent(G4HCofThisEvent*)
+void SensitiveDetector::EndOfEvent(G4HCofThisEvent *)
 {
 }
