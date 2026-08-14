@@ -39,7 +39,7 @@
 #include "ActionInitialization.hh"
 #include "DetectorConstruction.hh"
 #include "SensitiveDetector.hh"
-
+#include "G4OpticalPhoton.hh"
 #include "G4RunManagerFactory.hh"
 #include "G4UImanager.hh"
 #include "G4VisExecutive.hh"
@@ -49,9 +49,10 @@
 // PhysicsList
 #include "G4EmStandardPhysics_option4.hh"
 #include "PhysicsList.hh"
+#include "G4OpticalPhysics.hh"
 // macro loader
 #include "include/config.h"
-
+#include "Randomize.hh"
 // Opticks related header files
 #include "G4OpticalPhysicsOpticks.hh"
 #ifdef With_Opticks
@@ -68,6 +69,7 @@
 #include <accel/TrackingManagerIntegration.hh>
 #include <accel/UserActionIntegration.hh>
 #include <corecel/sys/Environment.hh>
+#include "MakeCelerOptions.hh"
 
 int main(int argc, char **argv)
 {
@@ -84,7 +86,7 @@ int main(int argc, char **argv)
     std::cout<<"Device "<<device<< std::endl;
   */
 #endif
-
+  G4Random::setTheSeed(12345);
   G4cout << G4endl;
   G4cout << " Usage : " << G4endl;
   G4cout << "Interactive Mode : ./gdml_det i ../GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml macros/g04.mac"
@@ -125,22 +127,13 @@ int main(int argc, char **argv)
   std::cout << "Defining Opticks Physics List" << std::endl;
   physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
 #endif
-  auto const celeritas_mode = celeritas::SharedParams::GetMode();
 
-  if (offload_mode == "optical-distribution")
+  if (offload_mode == "optical-distribution" && celeritas::SharedParams::GetMode() == celeritas::OffloadMode::enabled)
   {
+
     // Optical generation data is offloaded through user actions
     auto &uai = celeritas::UserActionIntegration::Instance();
-
     uai.SetOptions(MakeCelerOptions(offload_mode));
-    if (uai.GetMode() != celeritas::OffloadMode::enabled)
-    {
-      G4cerr
-          << "Configuration error: optical-distribution requires "
-             "Celeritas transport, but Celeritas is disabled."
-          << G4endl;
-      return 1;
-    }
   }
   else
   { // Geant4 tracks are offloaded through the tracking manager
