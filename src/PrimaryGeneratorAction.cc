@@ -129,66 +129,35 @@ G4double PrimaryGeneratorAction::EnergyToWavelength(G4double energy)
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
 {
-  static const std::vector<G4double> optical_energies = {
-      // 1.8785e-6 * MeV,
-      // 2.88625e-6 * MeV,
-      // 2.0e-06 * MeV,
-      // 3.21e-06 * MeV,
-      // 3.90205e-6 * MeV,
-      // 4.95070e-6 * MeV,
-      // 1.96760e-6 * MeV,
-      // 5.98475e-6 * MeV,
-      // 6.9e-6 * MeV,
-      // 7.55e-6 * MeV,
-      // 7.8e-6 * MeV,
-      // 8.0e-6 * MeV,
-      // 8.2e-6 * MeV,
-      // 8.5e-6 * MeV,
-      // 8.7e-6 * MeV,
-      // 8.9e-6 * MeV,
-      // 9.0e-6 * MeV,
-      // 9.1e-6 * MeV,
-      // 9.2e-6 * MeV,
-      // 9.49745e-6 * MeV,
-      // 9.69380e-6 * MeV,
-      // 9.85e-6 * MeV,
-      // 1.0e-5 * MeV,
-      // 1.03e-05 * MeV, 11.4736e-06 * MeV, 11.4849e-06 * MeV, 11.4962e-06 * MeV, 11.5075e-06 * MeV, 11.5188e-06 * MeV, 11.5302e-06 * MeV, 11.5416e-06 * MeV, 11.5530e-06 * MeV, 11.5644e-06 * MeV, 11.5758e-06 * MeV,
-      // 1e-06 * MeV, 2e-06 * MeV, 3e-06 * MeV, 4e-06 * MeV, 5e-06 * MeV, 6e-06 * MeV, 2e-07 * MeV
-      1.7e-06 * MeV,
-      2e-06 * MeV,
-      2.4e-06 * MeV,
-      2.7e-06 * MeV,
-      3.2e-06 * MeV,
-      3.4e-06 * MeV,
-      3.8e-06 * MeV,
-  };
+
   constexpr G4double electron_energy = 5 * MeV;
-  // G4GeneralParticleSource owns a G4SingleParticleSource.
-  // Configure that source according to the selected Celeritas mode.
   auto *source = fParticleGun->GetCurrentSource();
   if (celer_offload_mode_ == "optical-gun")
   {
-    auto const event_id = static_cast<std::size_t>(anEvent->GetEventID());
-    if (event_id >= optical_energies.size())
+    // Sample optical-photon energies uniformly between 1.7 and 3.8 eV.
+    constexpr G4double min_energy = 1.7 * eV;
+    constexpr G4double max_energy = 3.8 * eV;
+
+    for (G4int i = 0; i < fAmount; ++i)
     {
-      return;
+      G4double const energy = min_energy + (max_energy - min_energy) * G4UniformRand();
+
+      fParticleGun->SetParticleDefinition(
+          G4OpticalPhoton::OpticalPhotonDefinition());
+
+      source->GetEneDist()->SetEnergyDisType("Mono");
+      source->GetEneDist()->SetMonoEnergy(energy);
+
+      source->GetPosDist()->SetPosDisType("Point");
+      source->GetPosDist()->SetCentreCoords(
+          G4ThreeVector(0., 0., 0.));
+
+      source->GetAngDist()->SetAngDistType("planar");
+      source->GetAngDist()->SetParticleMomentumDirection(
+          G4ThreeVector(0., 0., 1.));
+
+      fParticleGun->GeneratePrimaryVertex(anEvent);
     }
-    // Generate a primary optical photon. The tracking-manager
-    // integration transfers this optical track to Celeritas.
-    fParticleGun->SetParticleDefinition(
-        G4OpticalPhoton::Definition());
-    source->GetEneDist()->SetEnergyDisType("Mono");
-    source->GetEneDist()->SetMonoEnergy(
-        optical_energies[event_id]);
-
-    source->GetPosDist()->SetPosDisType("Point");
-    source->GetPosDist()->SetCentreCoords(
-        G4ThreeVector(0., 0., 0.));
-
-    source->GetAngDist()->SetAngDistType("planar");
-    source->GetAngDist()->SetParticleMomentumDirection(
-        G4ThreeVector(0., 0., 1.));
   }
   else if (celer_offload_mode_ == "optical-distribution" || celer_offload_mode_ == "electron-photon" || celer_offload_mode_ == "optical-track")
   {

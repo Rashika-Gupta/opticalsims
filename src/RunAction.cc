@@ -159,7 +159,6 @@ void RunAction::EndOfRunAction(const G4Run *run)
     {
         if (celer_offload_mode_ == "electron-photon" && tmi.GetMode() == Mode::enabled)
         {
-            std::cout << "Entering here" << std::endl;
             auto &integration = celeritas::detail::IntegrationSingleton::instance();
             auto &local = dynamic_cast<celeritas::LocalTransporter &>(
                 integration.local_offload());
@@ -172,9 +171,6 @@ void RunAction::EndOfRunAction(const G4Run *run)
                 G4cout << "nEvents: " << run->GetNumberOfEvent() << "\n";
 
                 auto const &accum = optical_collector->optical_state(local.GetState()).accum();
-
-                // /    G4cout << "Celeritas accumulates " << accum.steps
-                // /           << " optical photons" << "\n";
             }
             auto counter_stats = optical_collector->exchange_counters(local.GetState().aux());
             size_t total_photons_generated = 0;
@@ -198,10 +194,8 @@ void RunAction::EndOfRunAction(const G4Run *run)
         analysisManager->CloseFile();
     }
     // Return Celeritas to an invalid state
-
     if (celer_offload_mode_ == "optical-distribution")
     {
-        std::cout << "Eding RunAction for optical-distribution mode" << std::endl;
         celeritas::UserActionIntegration::Instance()
             .EndOfRunAction(run);
     }

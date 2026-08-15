@@ -105,7 +105,6 @@ void EventAction::EndOfEventAction(const G4Event *event)
 
     if (celer_offload_mode_ == "optical-distribution")
     {
-        std::cout << "Ending EventAction for optical-distribution mode" << std::endl;
         celeritas::UserActionIntegration::Instance()
             .EndOfEventAction(event);
     }

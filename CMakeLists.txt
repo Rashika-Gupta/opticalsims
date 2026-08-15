@@ -19,7 +19,10 @@ option (With_Opticks OFF)
 
 option (With_DEBUG OFF)
 
-set(Celeritas_DIR "/Users/r1i/Desktop/project/forked/celeritas/build/lib/cmake/Celeritas")
+#----------------------------------------------------------------------------
+# Setup Celeritas package
+#
+# set(Celeritas_DIR "pathto/celeritas/build/lib/cmake/Celeritas")
 find_package(Celeritas 0.7 REQUIRED)
 
 if(With_Opticks)
@@ -62,6 +65,8 @@ endif()
 #
 add_executable(gdml_det gdml_det.cc ${sources} ${headers})
 
+#----------------------------------------------------------------------------
+# Set Celeritas offload mode
 set(OPTICALSIMS_CELERITAS_MODE "optical-track" CACHE STRING
     "Default Celeritas offload mode")
 
@@ -71,6 +76,8 @@ set_property(CACHE OPTICALSIMS_CELERITAS_MODE PROPERTY STRINGS
     electron-photon
     optical-gun)
 
+#----------------------------------------------------------------------------
+# Link Celeritas libraries
 target_compile_definitions(gdml_det PRIVATE
     DEFAULT_OFFLOAD_MODE="${OPTICALSIMS_CELERITAS_MODE}")
 #target_link_libraries(gdml_det ${Geant4_LIBRARIES} )

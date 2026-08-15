@@ -2,15 +2,23 @@
 // Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file offload-template/src/MakeCelerOptions.cc
+//! \file offload-template/src/MakeCelerOptions.hh
+/*
+ *
+ */
 //---------------------------------------------------------------------------//
 
+// Geant4 includes
 #include <G4OpticalPhoton.hh>
 #include "G4RunManager.hh"
 #include "AnalysisManagerHelper.hh"
 #include "G4AnalysisManager.hh"
 #include "G4Electron.hh"
+#include <G4Event.hh>
+#include <G4EventManager.hh>
+#include "G4VPhysicalVolume.hh"
 
+// Celeritas includes
 #include <accel/AlongStepFactory.hh>
 #include <accel/SetupOptions.hh>
 #include "celeritas/optical/DetectorData.hh"
@@ -21,21 +29,27 @@
 #include <corecel/sys/Environment.hh>
 #include <celeritas/ext/GeantOpticalPhysicsOptions.hh>
 #include <celeritas/optical/detail/OpticalUtils.hh>
-#include <G4Event.hh>
-#include <G4EventManager.hh>
 #include <string>
 #include <vector>
 #include "geocel/GeantGeoParams.hh"
 #include "geocel/g4/Convert.hh"
-#include "G4VPhysicalVolume.hh"
 #include <celeritas/Quantities.hh>
 
+//---------------------------------------------------------------------------//
+/*!
+ * Particles and optical generator associated with an offload mode.
+ */
 struct OffloadConfiguration
 {
+    //! Geant4 particle definitions to offload
     celeritas::SetupOptions::VecG4PD particles;
+
+    //! Celeritas optical primary generator
     celeritas::inp::OpticalGenerator generator;
 };
 
+//---------------------------------------------------------------------------//
+// Forward declarations
 inline void RecordOpticalHits(
     celeritas::Span<
         celeritas::optical::DetectorHit const>
@@ -44,6 +58,13 @@ inline void RecordOpticalHits(
 inline OffloadConfiguration MakeOffloadConfiguration(
     std::string const &mode);
 
+//---------------------------------------------------------------------------//
+/*!
+ * Construct Celeritas setup options for an optical offload mode.
+ *
+ * This configures the offloaded particles, optical primary generator,
+ * optical transport capacities, detector-hit callback and output file.
+ */
 inline celeritas::SetupOptions MakeCelerOptions(
     std::string const &mode)
 {
@@ -56,12 +77,17 @@ inline celeritas::SetupOptions MakeCelerOptions(
 
     constexpr celeritas::size_type num_tracks = 50650;
 
+    // Optical state capacities
     celeritas::OpticalSetupOptions optical;
 
     optical.capacity.tracks = num_tracks;
     optical.capacity.primaries = 8 * num_tracks;
     optical.capacity.generators = 2 * num_tracks;
+
+    // Return optical detector hits to the OpticalSims analysis manager
     optical.detectors.callback = RecordOpticalHits;
+
+    // Select the particles and optical generator for the offload mode
     auto config = MakeOffloadConfiguration(mode);
 
     opts.offload_particles = std::move(config.particles);
@@ -86,18 +112,19 @@ inline void RecordOpticalHits(
         G4EventManager::GetEventManager()
             ->GetConstCurrentEvent();
     CELER_EXPECT(event);
+
+    // Map Celeritas volume instances back to Geant4 physical volumes
     auto geant_geo = celeritas::global_geant_geo().lock();
     CELER_VALIDATE(geant_geo, << "Geant4 geometry mapping is unavailable");
 
-    // auto *sensor_ids =
-    //     AnalysisManagerHelper::getInstance()->GetDetectIds();
-
+    // Convert hits into the representation used by output
     std::vector<CelerOpticalHit> celer_hits;
     celer_hits.reserve(hits.size());
 
     for (auto const &hit : hits)
     {
         CelerOpticalHit h{};
+        // Use negative values for unavailable signed identifiers
         h.celer_detector_id = hit.detector
                                   ? static_cast<int>(hit.detector.unchecked_get())
                                   : -1;
@@ -114,24 +141,24 @@ inline void RecordOpticalHits(
                                    ? hit.unique_instance.unchecked_get()
                                    : 0;
         h.event_id = event->GetEventID();
+
+        // Store position in centimeters and time in seconds
         h.x = static_cast<float>(hit.position[0]);
         h.y = static_cast<float>(hit.position[1]);
         h.z = static_cast<float>(hit.position[2]);
         h.t = static_cast<float>(hit.time);
 
         h.energy_mev = static_cast<float>(value_as<MevEnergy>(hit.energy));
-        // Convert MeV to nm: E[eV] = 1239.8 / lambda[nm]
+
+        // Convert photon energy from MeV to wavelength in nanometers
         float energy_ev = h.energy_mev * 1e6f;
         h.wavelength_nm = (energy_ev > 0) ? (1239.8f / energy_ev) : -1.f;
+
+        // Use the mapped Geant4 physical volume to identify the sensor
         auto const *physical =
             geant_geo->id_to_geant(hit.volume_instance);
 
         h.sensor_name = physical->GetName();
-
-        // auto sid = sensor_id->find(h.sensor_name);
-        // if (sid == sensor_id->end())
-        //     continue; // match G4's "discard unknown volume" behavior
-        // h.sensor_id = sid->second;
         celer_hits.push_back(h);
     }
     if (anaHelper)
@@ -141,23 +168,20 @@ inline void RecordOpticalHits(
             << " Celeritas optical hits to analysis manager";
         anaHelper->AddCelerHits(celer_hits);
     }
-
-    CELER_LOG(debug)
-        << "Received " << hits.size()
-        << " Celeritas optical hits";
 }
 
 //---------------------------------------------------------------------------//
 /*!
- * Make offload configuration for the given mode.
+ * Select the particles and optical generator for an offload mode.
+ *
  * There are different mechanisms and path for offloading optical photon to celeritas.
  * The offload mode is set through the environment variable OPTICALSIMS_CELERITAS_MODE.
- * Supported values for OPTICALSIMS_CELERITAS_MODE are:
- * - electron-photon: Offload both electron and optical photon to celeritas.
- * - optical-gun: Generate optical photons of fixed energy and transport it in celeritas.
- * - optical-track: Geant4 creates optical photons and tracks and handles this track in celeritas.
+ * Supported modes:
+ * - `electron-photon`: Offload both electron and optical photon to celeritas.
+ * - `optical-gun`: Generate optical photons of fixed energy and transport it in celeritas.
+ * - `optical-track`: Geant4 creates optical photons and tracks and handles this track in celeritas.
  * This is like ray-tracing of optical photons in celeritas.
- * - optical-distribution: Offload the optical photon generation data specifically the scintillation
+ * - `optical-distribution`: Offload the optical photon generation data specifically the scintillation
  * and cherenkov distribution generation to celeritas. Celeritas then will sample the optical photons and transport them in celeritas.
  */
 inline OffloadConfiguration MakeOffloadConfiguration(
@@ -173,6 +197,7 @@ inline OffloadConfiguration MakeOffloadConfiguration(
 
     if (mode == "optical-distribution")
     {
+        // Generation data is offloaded instead of Geant4 tracks
         return {
             {},
             celeritas::inp::OpticalOffloadGenerator{}};
@@ -191,3 +216,4 @@ inline OffloadConfiguration MakeOffloadConfiguration(
         << mode << "'");
     CELER_ASSERT_UNREACHABLE();
 }
+//---------------------------------------------------------------------------//

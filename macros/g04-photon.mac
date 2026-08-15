@@ -1,0 +1,12 @@
+###################################################
+# Batch running of events  
+###################################################
+
+# verbosity
+/tracking/verbose 0
+/control/verbose 0
+/run/verbose 0
+# can be csv, root or hdf5
+/RunAction/output/file dune.root
+# GPS Particle Generation
+/run/beamOn 1 
