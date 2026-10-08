@@ -23,6 +23,9 @@ option (With_DEBUG OFF)
 # Setup Celeritas package
 #
 # set(Celeritas_DIR "pathto/celeritas/build/lib/cmake/Celeritas")
+if(NOT DEFINED Celeritas_DIR AND DEFINED ENV{Celeritas_DIR})
+  set(Celeritas_DIR "$ENV{Celeritas_DIR}")
+endif()
 find_package(Celeritas 0.7 REQUIRED)
 
 if(With_Opticks)
@@ -107,7 +110,7 @@ find_package(ROOT REQUIRED COMPONENTS RIO Net Tree ROOTDataFrame )
 
 # Setup ROOT definitions and include directories
 
-target_link_libraries(gdml_det PRIVATE
+celeritas_target_link_libraries(gdml_det 
 Celeritas::celeritas
 Celeritas::G4
 ${Geant4_LIBRARIES}
