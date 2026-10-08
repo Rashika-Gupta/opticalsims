@@ -89,14 +89,14 @@ void AnalysisManagerHelper::SavePhotonInfotoFile()
     G4AnalysisManager *AnaMngr = G4AnalysisManager::Instance();
     auto run = G4RunManager::GetRunManager();
     G4int eventID = run->GetCurrentEvent()->GetEventID();
-    AnaMngr->FillNtupleIColumn(4, 0, G4ScintPhotons);
-    AnaMngr->FillNtupleIColumn(4, 1, G4CerenkovPhotons);
-    AnaMngr->FillNtupleIColumn(4, 2, OpticksScintPhotons);
-    AnaMngr->FillNtupleIColumn(4, 3, OpticksCerenkovPhotons);
-    AnaMngr->FillNtupleDColumn(4, 4, Duration);
-    AnaMngr->FillNtupleIColumn(4, 5, eventID);
-    AnaMngr->FillNtupleIColumn(4, 6, fbatchID);
-    AnaMngr->AddNtupleRow(4);
+    AnaMngr->FillNtupleIColumn(5, 0, G4ScintPhotons);
+    AnaMngr->FillNtupleIColumn(5, 1, G4CerenkovPhotons);
+    AnaMngr->FillNtupleIColumn(5, 2, OpticksScintPhotons);
+    AnaMngr->FillNtupleIColumn(5, 3, OpticksCerenkovPhotons);
+    AnaMngr->FillNtupleDColumn(5, 4, Duration);
+    AnaMngr->FillNtupleIColumn(5, 5, eventID);
+    AnaMngr->FillNtupleIColumn(5, 6, fbatchID);
+    AnaMngr->AddNtupleRow(5);
 }
 
 void AnalysisManagerHelper::SaveG4HitsToFile()
@@ -120,6 +120,30 @@ void AnalysisManagerHelper::SaveG4HitsToFile()
     // std::cout << "G4Sim Event ID "<< run->GetCurrentEvent()->GetEventID() << " Saved " << ArapucaHits.size() << " hits to file" << std::endl;
     ArapucaHits.clear();
     ArapucaHits.shrink_to_fit();
+}
+
+void AnalysisManagerHelper::SaveG4SensitiveDetectorHitToFile(
+    ArapucaHit &hit)
+{
+    G4AutoLock lock(&FileMutex);
+
+    auto *analysisManager = G4AnalysisManager::Instance();
+    auto *runManager = G4RunManager::GetRunManager();
+
+    constexpr G4int ntupleId = 4;
+
+    analysisManager->FillNtupleIColumn(
+        ntupleId, 0,
+        runManager->GetCurrentEvent()->GetEventID());
+    analysisManager->FillNtupleIColumn(ntupleId, 1, hit.GetSid());
+    analysisManager->FillNtupleSColumn(ntupleId, 2, hit.GetDetName());
+    analysisManager->FillNtupleDColumn(ntupleId, 3, hit.GetPos().x());
+    analysisManager->FillNtupleDColumn(ntupleId, 4, hit.GetPos().y());
+    analysisManager->FillNtupleDColumn(ntupleId, 5, hit.GetPos().z());
+    analysisManager->FillNtupleDColumn(ntupleId, 6, hit.GetTime());
+    analysisManager->FillNtupleDColumn(ntupleId, 7, hit.GetWave());
+    analysisManager->FillNtupleIColumn(ntupleId, 8, hit.GetPid());
+    analysisManager->AddNtupleRow(ntupleId);
 }
 
 void AnalysisManagerHelper::SaveParticleSteps(const G4Step *step)

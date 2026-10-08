@@ -57,7 +57,7 @@ public:
 private:
     G4int fHCid{0};
     ArapucaHitsCollection *fArapucaHitsCollection{0};
-    std::map<G4String, G4int> *fDetectIds;
+    std::map<G4String, G4int> *fDetectIds{nullptr};
 };
 
 inline G4double EtoWavelengthNM(G4double E)

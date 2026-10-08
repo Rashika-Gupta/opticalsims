@@ -40,6 +40,7 @@
 #include "G4Track.hh"
 #include "G4VHit.hh"
 #include "G4VProcess.hh"
+#include "AnalysisManagerHelper.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 SensitiveDetector::SensitiveDetector(const G4String &name)
@@ -82,22 +83,29 @@ G4bool SensitiveDetector::ProcessHits(G4Step *aStep, G4TouchableHistory *th)
         return false;
     // auto analysisManager = G4AnalysisManager::Instance();
 
-    G4String detectName = aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName();
+    // G4String detectName = aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName();
     G4ThreeVector PPosition = aTrack->GetPosition();
     G4ThreeVector PMomentDir = aTrack->GetMomentumDirection();
     G4ThreeVector PPolar = aTrack->GetPolarization();
     G4double time = aTrack->GetGlobalTime();
+    auto *postVolume =
+        aStep->GetPostStepPoint()->GetPhysicalVolume();
+
+    if (!postVolume)
+        return false;
+
+    // The optical detector is the volume the photon is entering.
+    G4String detectName = postVolume->GetName();
 
     G4double Wavelength = EtoWavelengthNM(aTrack->GetTotalEnergy() / CLHEP::eV);
     G4String processName;
     G4int Procid = -1;
     G4int Sid = -1;
     auto it = fDetectIds->find(detectName);
-    if (it != fDetectIds->end())
-    {
-        Sid = it->second;
-    }
-    assert(Sid != -1);
+
+    if (it == fDetectIds->end())
+        return false;
+    Sid = it->second;
     const G4VProcess *proc = aTrack->GetCreatorProcess();
 
     if (proc != NULL)
@@ -111,9 +119,12 @@ G4bool SensitiveDetector::ProcessHits(G4Step *aStep, G4TouchableHistory *th)
 
     ArapucaHit *Hit = new ArapucaHit(Procid, Sid, detectName, Wavelength, time, PPosition, PMomentDir, PPolar);
     fArapucaHitsCollection->insert(Hit);
+    if (anaHelper)
+        anaHelper->SaveG4SensitiveDetectorHitToFile(*Hit);
+
     aTrack->SetTrackStatus(fStopAndKill);
 
-    return false;
+    return true;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

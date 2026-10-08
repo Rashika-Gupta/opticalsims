@@ -52,6 +52,7 @@ public:
     void SetDuration(G4double dr);
     void SavePhotonInfotoFile();
     void SaveG4HitsToFile();
+    void SaveG4SensitiveDetectorHitToFile(ArapucaHit &hit);
     void SetDetectIds(const std::map<G4String, G4int> &fIDs);
     void SetBatchID(G4int id) { fbatchID = id; };
     void AddG4Hits(ArapucaHit &hit);

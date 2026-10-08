@@ -236,6 +236,7 @@ G4VPhysicalVolume *DetectorConstruction::Construct()
   for (auto &[sd_name, volumes] : sensdet_map)
   {
     auto *sd = new SensitiveDetector(sd_name);
+    sd->SetDetectIds(&fDetectIds);
     sdman->AddNewDetector(sd);
     for (auto *lv : volumes)
     {
@@ -260,6 +261,65 @@ G4VPhysicalVolume *DetectorConstruction::Construct()
 
 void DetectorConstruction::ConstructSDandField()
 {
+
+  // Construct() attaches the master-thread SD used while Celeritas
+  // builds its detector mapping. Each Geant4 worker also needs its
+  // own SD instance.
+  std::map<G4String, std::vector<G4LogicalVolume *>>
+      sensitiveVolumes;
+
+  const auto *auxmap = fParser->GetAuxMap();
+
+  for (const auto &auxEntry : *auxmap)
+  {
+    auto *logicalVolume = auxEntry.first;
+
+    for (const auto &aux : auxEntry.second)
+    {
+      if ((aux.type == "PD" || aux.type == "SensDet") && aux.value == "PhotonDetector")
+      {
+        sensitiveVolumes[aux.value].push_back(
+            logicalVolume);
+      }
+    }
+  }
+
+  auto *sdManager = G4SDManager::GetSDMpointer();
+
+  for (auto &[sdName, logicalVolumes] :
+       sensitiveVolumes)
+  {
+    // In sequential mode the SD installed in Construct() may
+    // already be visible. Avoid registering it twice.
+    G4bool workerAttachmentNeeded = false;
+
+    for (auto *logicalVolume : logicalVolumes)
+    {
+      if (!logicalVolume->GetSensitiveDetector())
+      {
+        workerAttachmentNeeded = true;
+        break;
+      }
+    }
+
+    if (!workerAttachmentNeeded)
+      continue;
+
+    auto *workerSD = new SensitiveDetector(sdName);
+    workerSD->SetDetectIds(&fDetectIds);
+    sdManager->AddNewDetector(workerSD);
+
+    for (auto *logicalVolume : logicalVolumes)
+    {
+      logicalVolume->SetSensitiveDetector(workerSD);
+
+      G4cout << "Worker attached SD="
+             << workerSD->GetName()
+             << " to logicalVolume="
+             << logicalVolume->GetName()
+             << G4endl;
+    }
+  }
 }
 
 std::vector<std::string_view> DetectorConstruction::Split(const std::string_view &s, char del)
