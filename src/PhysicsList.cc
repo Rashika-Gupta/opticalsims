@@ -40,8 +40,9 @@ PhysicsList::PhysicsList(G4String const &offloadMode) : FTFP_BERT_HP()
         params->SetProcessActivation("Cerenkov", false);
         params->SetProcessActivation("Scintillation", true);
         params->SetProcessActivation("OpAbsorption", true);
-        params->SetProcessActivation("OpRayleigh", false);
+        params->SetProcessActivation("OpRayleigh", true);
         params->SetProcessActivation("OpBoundary", true);
+        params->SetBoundaryInvokeSD(true);
         params->SetProcessActivation("OpWLS", true);
         params->SetProcessActivation("OpMieHG", false);
         RegisterPhysics(new G4OpticalPhysics());
@@ -72,7 +73,17 @@ void PhysicsList::ConstructProcess()
             }
         }
     }
+
+    auto *op_pm = G4OpticalPhoton::Definition()->GetProcessManager();
+    for (G4int i = op_pm->GetProcessListLength() - 1; i >= 0; --i)
+    {
+        auto *process = (*op_pm->GetProcessList())[i];
+
+        if (process->GetProcessName() == "Scintillation")
+            op_pm->RemoveProcess(process);
+    }
 }
+
 celeritas::GeantOpticalPhysicsOptions PhysicsList::optical_options() const
 {
     celeritas::GeantOpticalPhysicsOptions optical;
