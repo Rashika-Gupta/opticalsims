@@ -3,6 +3,7 @@
 //
 
 #include "EventAction.hh"
+#include "RunAction.hh"
 
 #include <G4AnalysisManager.hh>
 #include <G4AutoLock.hh>
@@ -17,7 +18,11 @@
 #include "include/config.h"
 #include <accel/UserActionIntegration.hh>
 #include <corecel/sys/Environment.hh>
-
+#include <accel/detail/IntegrationSingleton.hh>
+#include <accel/LocalTransporter.hh>
+#include <celeritas/optical/OpticalCollector.hh>
+#include <celeritas/optical/CoreState.hh>
+#include <celeritas/global/CoreState.hh>
 #ifdef With_Opticks
 #include "SEvt.hh"
 #include "G4CXOpticks.hh"
@@ -33,6 +38,7 @@ EventAction::~EventAction() {}
 
 void EventAction::BeginOfEventAction(const G4Event *event)
 {
+    startTime = Clock::now();
     if (!anaHelper)
     {
         anaHelper = std::make_unique<AnalysisManagerHelper>();
@@ -45,13 +51,13 @@ void EventAction::BeginOfEventAction(const G4Event *event)
         celeritas::UserActionIntegration::Instance()
             .BeginOfEventAction(event);
     }
-    startTime = std::chrono::high_resolution_clock::now();
-    cout << "Begin event " << event->GetEventID() << endl;
 }
 
 void EventAction::EndOfEventAction(const G4Event *event)
 {
+#ifdef With_Opticks
     G4int evtID = event->GetEventID();
+#endif
     // auto analysisManager = G4AnalysisManager::Instance();
 
 #ifdef With_Opticks
@@ -76,32 +82,10 @@ void EventAction::EndOfEventAction(const G4Event *event)
         hitHandler->Simulate(evtID);
     }
 #endif
-    // Instance for AnalysisHelper
-    auto duration = chrono::high_resolution_clock::now() - startTime;
-    auto EventTime = chrono::duration_cast<chrono::duration<double>>(duration).count();
-
     // Save Opticks Hits
 #ifdef With_Opticks
     hitHandler->SaveHits();
 #endif
-
-    // Save Photon Computation Time
-    anaHelper->SetDuration(EventTime);
-
-    // Save Photon info
-    anaHelper->SavePhotonInfotoFile();
-
-    if (anaHelper->HasCelerHits())
-    {
-        G4cout << "Saving Celeritas hits" << G4endl;
-        anaHelper->SaveCelerHitsToFile();
-    }
-    /////// GEANT4 HITS ///////
-    else
-    {
-        G4cout << "Calling G4 Hits" << G4endl;
-        anaHelper->SaveG4HitsToFile();
-    }
 
     if (celer_offload_mode_ == "optical-distribution")
     {
@@ -109,5 +93,23 @@ void EventAction::EndOfEventAction(const G4Event *event)
             .EndOfEventAction(event);
     }
 
-    G4cout << "Event " << evtID << ", End Time " << EventTime << " seconds" << G4endl;
+    // Include the Celeritas end-of-event flush in PhotonInfo.Time.
+    const double eventTime =
+        std::chrono::duration<double>(Clock::now() - startTime).count();
+    anaHelper->SetDuration(eventTime);
+    anaHelper->SavePhotonInfotoFile();
+
+    if (anaHelper->HasCelerHits())
+    {
+        anaHelper->SaveCelerHitsToFile();
+    }
+    /////// GEANT4 HITS ///////
+    else
+    {
+        anaHelper->SaveG4HitsToFile();
+    }
+    // Include the end-of-event flush and hit saving in the JSON event time.
+    RunAction::RecordEventTiming(
+        event->GetEventID(),
+        std::chrono::duration<double>(Clock::now() - startTime).count());
 }

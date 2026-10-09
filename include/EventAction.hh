@@ -8,6 +8,7 @@
 #include "G4UserEventAction.hh"
 #include "globals.hh"
 #include <string>
+#include <chrono>
 class G4Event;
 
 using namespace std;
@@ -20,7 +21,8 @@ public:
     void EndOfEventAction(const G4Event *) override;
 
 private:
-    chrono::time_point<chrono::high_resolution_clock> startTime;
+    using Clock = std::chrono::steady_clock;
+    Clock::time_point startTime;
     std::string celer_offload_mode_;
 };
 

@@ -5,15 +5,56 @@
 #include "G4Run.hh"
 #include "G4AnalysisManager.hh"
 #include "G4Material.hh"
+#include "G4ios.hh"
 #include <fstream>
-#include <G4Run.hh>
 #include <G4Threading.hh>
-RunAction::RunAction(std::string celer_offload_mode) : G4UserRunAction(), celer_offload_mode_(std::move(celer_offload_mode)), fmsg(nullptr), fFileName("out.csv")
+#include <mutex>
+#include <utility>
+#include <vector>
+
+RunAction::RunAction(std::string celer_offload_mode) : G4UserRunAction(), fmsg(nullptr), fFileName("out.csv"), celer_offload_mode_(std::move(celer_offload_mode))
 {
     // G4int n_particle = 1;
 
     fmsg = new G4GenericMessenger(this, "/RunAction/output/", "");
     fmsg->DeclareProperty("file", fFileName, "File Name to Save");
+}
+namespace
+{
+    using TimePoint = std::chrono::steady_clock::time_point;
+
+    double Seconds(TimePoint begin, TimePoint end)
+    {
+        return std::chrono::duration<double>(end - begin).count();
+    }
+
+    // Buffer timing records during the run; write JSON after application teardown.
+    struct RunTiming
+    {
+        int run_id;
+        int thread;
+        int events_processed;
+        bool is_master;
+        double celer_hit_callback;
+        std::size_t celer_hits_received;
+        double run_action_total;
+    };
+
+    struct EventTiming
+    {
+        int run_id;
+        int thread;
+        int event_id;
+        double event_elapsed;
+    };
+
+    std::mutex timing_mutex;
+    std::vector<RunTiming> run_timings;
+    std::vector<EventTiming> event_timings;
+    thread_local std::vector<EventTiming> local_event_timings;
+    thread_local int current_run_id = -1;
+    thread_local double local_hit_callback_seconds = 0.0;
+    thread_local std::size_t local_hits_received = 0;
 }
 
 RunAction::~RunAction()
@@ -23,6 +64,11 @@ RunAction::~RunAction()
 
 void RunAction::BeginOfRunAction(const G4Run *run)
 {
+    startTime = std::chrono::steady_clock::now();
+    current_run_id = run->GetRunID();
+    local_event_timings.clear();
+    local_hit_callback_seconds = 0.0;
+    local_hits_received = 0;
 
     if (celer_offload_mode_ == "optical-distribution")
     {
@@ -34,7 +80,6 @@ void RunAction::BeginOfRunAction(const G4Run *run)
         celeritas::TrackingManagerIntegration::Instance()
             .BeginOfRunAction(run);
     }
-
     // ─────────────────────────────────────────────────────────────────────
 
     // Get the analysis manager
@@ -153,20 +198,11 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     analysisManager->CreateNtupleDColumn("energy");
     analysisManager->FinishNtuple();
 #endif
-
-    startTime = chrono::high_resolution_clock::now();
-    RunTime = 0;
     G4cout << "### Run started ###" << G4endl;
 }
 
 void RunAction::EndOfRunAction(const G4Run *run)
 {
-    auto duration = chrono::high_resolution_clock::now() - startTime;
-    RunTime = chrono::duration_cast<chrono::duration<double>>(duration).count();
-    if (G4Threading::IsMasterThread())
-        std::cout << "Run time: " << RunTime << " seconds" << G4endl;
-
-    std::cout << "Run time: " << RunTime << " seconds" << G4endl;
     using Mode = celeritas::OffloadMode;
 
     auto &tmi = celeritas::TrackingManagerIntegration::Instance();
@@ -182,18 +218,15 @@ void RunAction::EndOfRunAction(const G4Run *run)
 
             if (optical_collector)
             {
-                // run->GetNumberOfEvent();
                 G4cout << "nEvents: " << run->GetNumberOfEvent() << "\n";
-
-                auto const &accum = optical_collector->optical_state(local.GetState()).accum();
+                auto counter_stats = optical_collector->exchange_counters(local.GetState().aux());
+                size_t total_photons_generated = 0;
+                for (auto const &gen_counters : counter_stats.generators)
+                {
+                    total_photons_generated += gen_counters.num_generated;
+                }
+                G4cout << "Celeritas generated " << total_photons_generated << " optical photons " << "\n";
             }
-            auto counter_stats = optical_collector->exchange_counters(local.GetState().aux());
-            size_t total_photons_generated = 0;
-            for (auto const &gen_counters : counter_stats.generators)
-            {
-                total_photons_generated += gen_counters.num_generated;
-            }
-            G4cout << "Celeritas generated " << total_photons_generated << " optical photons " << "\n";
             // Write Celeritas diagnostics to ROOT file
             std::ostringstream diagnostics;
             tmi.GetParams().output_reg()->output(&diagnostics);
@@ -205,6 +238,7 @@ void RunAction::EndOfRunAction(const G4Run *run)
     {
         if (G4Threading::IsMasterThread())
             cout << "Saving Events to " << analysisManager->GetFileName() << " root file .." << G4endl;
+
         analysisManager->Write();
         analysisManager->CloseFile();
     }
@@ -219,4 +253,97 @@ void RunAction::EndOfRunAction(const G4Run *run)
         celeritas::TrackingManagerIntegration::Instance()
             .EndOfRunAction(run);
     }
+    const auto runEnd = std::chrono::steady_clock::now();
+    RecordRunTiming(run, runEnd);
+}
+
+void RunAction::RecordEventTiming(int event_id, double elapsed_s)
+{
+    // Buffer event records per thread; merge once when that thread ends its run.
+    local_event_timings.push_back({current_run_id,
+                                   G4Threading::G4GetThreadId(),
+                                   event_id,
+                                   elapsed_s});
+}
+
+void RunAction::RecordCelerHitCallbackTiming(double elapsed_s, std::size_t hits)
+{
+    // The callback receives host hits; GPU-to-host transfer happened earlier.
+    local_hit_callback_seconds += elapsed_s;
+    local_hits_received += hits;
+}
+
+void RunAction::RecordRunTiming(const G4Run *run, TimePoint run_end) const
+{
+    // One record per run/thread. Run times from different threads overlap.
+    RunTiming entry{
+        run->GetRunID(),
+        G4Threading::G4GetThreadId(),
+        run->GetNumberOfEvent(),
+        !G4Threading::IsWorkerThread(),
+        local_hit_callback_seconds,
+        local_hits_received,
+        Seconds(startTime, run_end)};
+
+    std::lock_guard<std::mutex> lock(timing_mutex);
+    run_timings.push_back(entry);
+    event_timings.insert(event_timings.end(),
+                         local_event_timings.begin(),
+                         local_event_timings.end());
+    local_event_timings.clear();
+}
+
+void RunAction::WriteTimingJson(const ProcessTiming &t,
+                                const std::string &offload_mode,
+                                bool celeritas_enabled)
+{
+    const double gdml = Seconds(t.gdml_start, t.gdml_end);
+    const double initialize = Seconds(t.init_start, t.init_end);
+    nlohmann::json report;
+    report["system"] = {
+        {"backend", celeritas_enabled ? "celeritas" : "geant4"},
+        {"offload_mode", offload_mode}};
+
+    auto &time = report["result"]["time"];
+    time["_units"] = "s";
+    time["process"] = {
+        {"gdml_read", gdml},
+        {"g4_init", initialize}};
+
+    time["runs"] = nlohmann::json::array();
+    std::size_t events_total = 0;
+    {
+        std::lock_guard<std::mutex> lock(timing_mutex);
+        for (const auto &r : run_timings)
+        {
+            // Master counts already include all worker events.
+            if (r.is_master)
+                events_total += r.events_processed;
+            time["runs"].push_back({{"run_id", r.run_id},
+                                    {"thread", r.thread},
+                                    {"events_processed", r.events_processed},
+                                    {"celer_hits_received", r.celer_hits_received},
+                                    {"time", {{"celer_hit_callback", r.celer_hit_callback}, {"run_action_total", r.run_action_total}}}});
+        }
+        time["events"] = nlohmann::json::array();
+        for (const auto &e : event_timings)
+        {
+            time["events"].push_back({{"run_id", e.run_id},
+                                      {"thread", e.thread},
+                                      {"event_id", e.event_id},
+                                      {"time", {{"event_elapsed", e.event_elapsed}}}});
+        }
+    }
+    report["system"]["events_total"] = events_total;
+    // Keep application timings separate from Celeritas's own output JSON.
+    const char *filename = celeritas_enabled
+                               ? "timing_celeritas.json"
+                               : "timing_geant4.json";
+    std::ofstream output(filename);
+    if (!output)
+    {
+        G4cerr << "Could not write " << filename << G4endl;
+        return;
+    }
+    output << report.dump(2) << '\n';
 }

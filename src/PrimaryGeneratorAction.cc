@@ -68,7 +68,7 @@
 PrimaryGeneratorAction::PrimaryGeneratorAction(std::string celer_offload_mode)
     : G4VUserPrimaryGeneratorAction(), celer_offload_mode_(std::move(celer_offload_mode)),
       fParticleGun(0),
-      fmsg(nullptr), fFileName(""), finitParticleType("GPS"), fAmount(2), fPosition(G4ThreeVector(-314 * cm, 72 * cm, 290 * cm)), fMom(9.7 * eV), fSigmaMom(0.1 * eV), fPhotonAmount({0.25, 25, 11}), fVerbose(false), fGPUPhotonType("Sphoton")
+      fmsg(nullptr), fFileName(""), finitParticleType("GPS"), fAmount(0), fPosition(G4ThreeVector(-314 * cm, 72 * cm, 290 * cm)), fMom(9.7 * eV), fSigmaMom(0.1 * eV), fPhotonAmount({0.25, 25, 11}), fVerbose(false), fGPUPhotonType("Sphoton")
 {
   // if (celer_offload_mode_ != 0)
   // {
@@ -130,33 +130,65 @@ G4double PrimaryGeneratorAction::EnergyToWavelength(G4double energy)
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
 {
 
-  constexpr G4double electron_energy = 5 * MeV;
+  constexpr G4double electron_energy = 50 * MeV;
   auto *source = fParticleGun->GetCurrentSource();
   if (celer_offload_mode_ == "optical-gun")
   {
-    // Sample optical-photon energies uniformly between 1.7 and 3.8 eV.
-    constexpr G4double min_energy = 1.7 * eV;
-    constexpr G4double max_energy = 3.8 * eV;
+    constexpr G4int numPhotons = 100;
+    constexpr G4double minOpticalEnergy = 10.45 * eV;
+    constexpr G4double maxOpticalEnergy = 11.57 * eV;
+    G4ThreeVector const position(20.0 * mm,
+                                 -5915.6875 * mm,
+                                 351.1875 * mm);
+    G4ThreeVector const direction(-1., 0., 0.);
 
-    for (G4int i = 0; i < fAmount; ++i)
+    fParticleGun->SetParticleDefinition(
+        G4OpticalPhoton::OpticalPhotonDefinition());
+    source->GetPosDist()->SetPosDisType("Point");
+    source->GetPosDist()->SetCentreCoords(position);
+    source->GetAngDist()->SetAngDistType("planar");
+    source->GetAngDist()->SetParticleMomentumDirection(direction);
+    //  Emit uniformly over the complete 4-pi solid angle.
+    // source->GetAngDist()->SetAngDistType("iso");
+    // source->GetAngDist()->SetMinTheta(0.0);
+    // source->GetAngDist()->SetMaxTheta(CLHEP::pi);
+    // source->GetAngDist()->SetMinPhi(0.0);
+    // source->GetAngDist()->SetMaxPhi(CLHEP::twopi);
+    // fParticleGun->SetParticlePolarization(
+    //     G4ThreeVector(0.0, 1.0, 0.0));
+    fParticleGun->SetNumberOfParticles(1);
+
+    auto *analysisManager = G4AnalysisManager::Instance();
+    for (G4int i = 0; i < numPhotons; ++i)
     {
-      G4double const energy = min_energy + (max_energy - min_energy) * G4UniformRand();
-
-      fParticleGun->SetParticleDefinition(
-          G4OpticalPhoton::OpticalPhotonDefinition());
-
+      const G4double energy =
+          minOpticalEnergy + G4UniformRand() * (maxOpticalEnergy - minOpticalEnergy);
+      std::cout << "Generating photon " << i << " of " << numPhotons
+                << " with energy " << energy << std::endl;
       source->GetEneDist()->SetEnergyDisType("Mono");
       source->GetEneDist()->SetMonoEnergy(energy);
-
-      source->GetPosDist()->SetPosDisType("Point");
-      source->GetPosDist()->SetCentreCoords(
-          G4ThreeVector(0., 0., 0.));
-
-      source->GetAngDist()->SetAngDistType("planar");
-      source->GetAngDist()->SetParticleMomentumDirection(
-          G4ThreeVector(0., 0., 1.));
-
       fParticleGun->GeneratePrimaryVertex(anEvent);
+
+      // GPS has sampled the isotropic momentum. Set a random
+      // polarization perpendicular to that direction.
+      auto *vertex = anEvent->GetPrimaryVertex(
+          anEvent->GetNumberOfPrimaryVertex() - 1);
+      auto *primary = vertex->GetPrimary();
+
+      const G4ThreeVector direction =
+          primary->GetMomentumDirection().unit();
+
+      const G4ThreeVector perpendicular =
+          direction.orthogonal().unit();
+      const G4ThreeVector parallel =
+          perpendicular.cross(direction).unit();
+
+      const G4double angle = CLHEP::twopi * G4UniformRand();
+      const G4ThreeVector polarization =
+          std::cos(angle) * perpendicular +
+          std::sin(angle) * parallel;
+
+      primary->SetPolarization(polarization);
     }
   }
   else if (celer_offload_mode_ == "optical-distribution" || celer_offload_mode_ == "electron-photon" || celer_offload_mode_ == "optical-track")
@@ -178,7 +210,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
 
     source->GetPosDist()->SetPosDisType("Point");
     source->GetPosDist()->SetCentreCoords(
-        G4ThreeVector(200., 300., 1000.));
+        G4ThreeVector(-314., 72., 290.));
   }
   else
   {
@@ -192,10 +224,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
                 description);
     return;
   }
+  return;
 
-  fParticleGun->GeneratePrimaryVertex(anEvent);
-
-  // return;
+  //  fParticleGun->GeneratePrimaryVertex(anEvent);
 
 #ifdef With_Opticks
   int tid = G4Threading::G4GetThreadId();
@@ -211,7 +242,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
   if (finitParticleType == "GPS")
   {
     auto analysisManager = G4AnalysisManager::Instance();
-    fParticleGun->GeneratePrimaryVertex(anEvent);
+    // fParticleGun->GeneratePrimaryVertex(anEvent);
     analysisManager->FillNtupleSColumn(0, 0, fParticleGun->GetParticleDefinition()->GetParticleName());
     analysisManager->FillNtupleIColumn(0, 1, fParticleGun->GetParticleDefinition()->GetParticleDefinitionID());
     analysisManager->FillNtupleDColumn(0, 2, fParticleGun->GetParticleEnergy());

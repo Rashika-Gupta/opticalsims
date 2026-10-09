@@ -12,6 +12,7 @@
 #include <G4OpticalPhoton.hh>
 #include "G4RunManager.hh"
 #include "AnalysisManagerHelper.hh"
+#include "RunAction.hh"
 #include "G4AnalysisManager.hh"
 #include "G4Electron.hh"
 #include <G4Event.hh>
@@ -31,6 +32,7 @@
 #include <celeritas/optical/detail/OpticalUtils.hh>
 #include <string>
 #include <vector>
+#include <chrono>
 #include "geocel/GeantGeoParams.hh"
 #include "geocel/g4/Convert.hh"
 #include <celeritas/Quantities.hh>
@@ -105,6 +107,7 @@ inline void RecordOpticalHits(
         celeritas::optical::DetectorHit const>
         hits)
 {
+    const auto callback_start = std::chrono::steady_clock::now();
     using celeritas::real_type;
     using celeritas::value_as;
     using celeritas::units::MevEnergy;
@@ -168,6 +171,10 @@ inline void RecordOpticalHits(
             << " Celeritas optical hits to analysis manager";
         anaHelper->AddCelerHits(celer_hits);
     }
+    // CPU conversion and buffering only; device-to-host copy precedes this callback.
+    RunAction::RecordCelerHitCallbackTiming(
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - callback_start).count(),
+        hits.size());
 }
 
 //---------------------------------------------------------------------------//
