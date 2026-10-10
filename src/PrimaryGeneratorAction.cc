@@ -56,6 +56,7 @@
 #include "G4Threading.hh"
 #include "G4MTRunManager.hh"
 #include "../include/AnalysisManagerHelper.hh"
+
 #ifdef With_Opticks
 #include "srng.h"
 #include "storch.h"
@@ -70,14 +71,30 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(std::string celer_offload_mode)
       fParticleGun(0),
       fmsg(nullptr), fFileName(""), finitParticleType("GPS"), fAmount(0), fPosition(G4ThreeVector(-314 * cm, 72 * cm, 290 * cm)), fMom(9.7 * eV), fSigmaMom(0.1 * eV), fPhotonAmount({0.25, 25, 11}), fVerbose(false), fGPUPhotonType("Sphoton")
 {
-  // if (celer_offload_mode_ != 0)
-  // {
-  //    fParticleGun = new G4ParticleGun(1);
-  // }
-  // else
-  // {
+
   fParticleGun = new G4GeneralParticleSource();
-  // // }
+  // Configure default electron source. Commands in the user macro can
+  // override these values before /run/beamOn.
+  if (celer_offload_mode_ == "electron-photon" || celer_offload_mode_ == "optical-track" || celer_offload_mode_ == "optical-distribution")
+  {
+    auto *source = fParticleGun->GetCurrentSource();
+
+    fParticleGun->SetParticleDefinition(
+        G4Electron::Definition());
+    fParticleGun->SetNumberOfParticles(1);
+
+    source->GetEneDist()->SetEnergyDisType("Mono");
+    source->GetEneDist()->SetMonoEnergy(100 * MeV);
+
+    source->GetAngDist()->SetAngDistType("planar");
+    source->GetAngDist()->SetParticleMomentumDirection(
+        G4ThreeVector(0, 0, -1));
+
+    source->GetPosDist()->SetPosDisType("Point");
+    source->GetPosDist()->SetCentreCoords(
+        G4ThreeVector(-314 * mm, 72 * mm, 290 * mm));
+  }
+
   fmsg = new G4GenericMessenger(this, "/PrimaryGenerationAction/input/", "");
   fmsg->DeclareProperty("type", finitParticleType, "Initial Particle Type: LArSoft or GPS (Default)");
   fmsg->DeclareProperty("file", fFileName, "File Name to Read");
@@ -129,88 +146,74 @@ G4double PrimaryGeneratorAction::EnergyToWavelength(G4double energy)
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
 {
+  char const *disabled = std::getenv("CELER_DISABLE");
 
-  constexpr G4double electron_energy = 50 * MeV;
+  std::string transport =
+      (disabled && std::string(disabled) == "1")
+          ? "geant4"
+          : "celeritas";
+  std::cout << "transport is : " << transport;
   auto *source = fParticleGun->GetCurrentSource();
   if (celer_offload_mode_ == "optical-gun")
   {
-    constexpr G4int numPhotons = 100;
-    constexpr G4double minOpticalEnergy = 10.45 * eV;
-    constexpr G4double maxOpticalEnergy = 11.57 * eV;
-    G4ThreeVector const position(20.0 * mm,
-                                 -5915.6875 * mm,
-                                 351.1875 * mm);
-    G4ThreeVector const direction(-1., 0., 0.);
 
-    fParticleGun->SetParticleDefinition(
-        G4OpticalPhoton::OpticalPhotonDefinition());
-    source->GetPosDist()->SetPosDisType("Point");
-    source->GetPosDist()->SetCentreCoords(position);
-    source->GetAngDist()->SetAngDistType("planar");
-    source->GetAngDist()->SetParticleMomentumDirection(direction);
-    //  Emit uniformly over the complete 4-pi solid angle.
-    // source->GetAngDist()->SetAngDistType("iso");
-    // source->GetAngDist()->SetMinTheta(0.0);
-    // source->GetAngDist()->SetMaxTheta(CLHEP::pi);
-    // source->GetAngDist()->SetMinPhi(0.0);
-    // source->GetAngDist()->SetMaxPhi(CLHEP::twopi);
-    // fParticleGun->SetParticlePolarization(
-    //     G4ThreeVector(0.0, 1.0, 0.0));
-    fParticleGun->SetNumberOfParticles(1);
-
-    auto *analysisManager = G4AnalysisManager::Instance();
-    for (G4int i = 0; i < numPhotons; ++i)
+    if (transport == "celeritas")
     {
-      const G4double energy =
-          minOpticalEnergy + G4UniformRand() * (maxOpticalEnergy - minOpticalEnergy);
-      std::cout << "Generating photon " << i << " of " << numPhotons
-                << " with energy " << energy << std::endl;
-      source->GetEneDist()->SetEnergyDisType("Mono");
-      source->GetEneDist()->SetMonoEnergy(energy);
-      fParticleGun->GeneratePrimaryVertex(anEvent);
+      // Do not create Geant4 optical primaries.
+      // Celeritas optical-primary execution is triggered separately.
+      return;
+    }
 
-      // GPS has sampled the isotropic momentum. Set a random
-      // polarization perpendicular to that direction.
-      auto *vertex = anEvent->GetPrimaryVertex(
-          anEvent->GetNumberOfPrimaryVertex() - 1);
-      auto *primary = vertex->GetPrimary();
+    if (transport == "geant4")
+    {
+      auto const &gun = OpticalGunConfig::Instance().parameters();
 
-      const G4ThreeVector direction =
-          primary->GetMomentumDirection().unit();
+      CELER_VALIDATE(gun.num_photons > 0,
+                     << "optical gun photon count must be positive");
+      CELER_VALIDATE(gun.sigma_energy > 0,
+                     << "optical gun sigma energy must be positive");
+      CELER_VALIDATE(gun.min_energy < gun.max_energy,
+                     << "optical gun minimum energy must be below maximum energy");
+      CELER_VALIDATE(gun.mean_energy >= gun.min_energy
+                         && gun.mean_energy <= gun.max_energy,
+                     << "optical gun mean energy must be inside its truncation bounds");
+      CELER_VALIDATE(transport == "geant4",
+                     << "invalid offload mode: " << transport);
 
-      const G4ThreeVector perpendicular =
-          direction.orthogonal().unit();
-      const G4ThreeVector parallel =
-          perpendicular.cross(direction).unit();
+      fParticleGun->SetParticleDefinition(
+          G4OpticalPhoton::Definition());
 
-      const G4double angle = CLHEP::twopi * G4UniformRand();
-      const G4ThreeVector polarization =
-          std::cos(angle) * perpendicular +
-          std::sin(angle) * parallel;
+      source->GetPosDist()->SetPosDisType("Point");
+      source->GetPosDist()->SetCentreCoords(gun.position);
 
-      primary->SetPolarization(polarization);
+      source->GetAngDist()->SetAngDistType("iso");
+      fParticleGun->SetNumberOfParticles(1);
+
+      for (G4int i = 0; i < gun.num_photons; ++i)
+      {
+
+        G4double energy;
+        do
+        {
+          energy = G4RandGauss::shoot(gun.mean_energy,
+                                      gun.sigma_energy);
+        } while (energy < gun.min_energy || energy > gun.max_energy);
+
+        source->GetEneDist()->SetEnergyDisType("Mono");
+        source->GetEneDist()->SetMonoEnergy(energy);
+
+        fParticleGun->GeneratePrimaryVertex(anEvent);
+      }
     }
   }
+
   else if (celer_offload_mode_ == "optical-distribution" || celer_offload_mode_ == "electron-photon" || celer_offload_mode_ == "optical-track")
   {
     // Generate a charged primary. The selected mode determines
     // whether the electron, optical tracks, or optical-generation
     // distributions are sent to Celeritas.
     std::cout << "Generating primary electron for event " << anEvent->GetEventID();
-    fParticleGun->SetParticleDefinition(
-        G4Electron::Definition());
-
-    source->GetEneDist()->SetEnergyDisType("Mono");
-    source->GetEneDist()->SetMonoEnergy(
-        electron_energy);
-
-    source->GetAngDist()->SetAngDistType("planar");
-    source->GetAngDist()->SetParticleMomentumDirection(
-        G4ThreeVector(0., 0., -1.));
-
-    source->GetPosDist()->SetPosDisType("Point");
-    source->GetPosDist()->SetCentreCoords(
-        G4ThreeVector(-314., 72., 290.));
+    fParticleGun->GeneratePrimaryVertex(anEvent);
   }
   else
   {
@@ -224,10 +227,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event *anEvent)
                 description);
     return;
   }
-  return;
+// return;
 
-  //  fParticleGun->GeneratePrimaryVertex(anEvent);
-
+// return;
 #ifdef With_Opticks
   int tid = G4Threading::G4GetThreadId();
   if (sphotons.size() > 0)

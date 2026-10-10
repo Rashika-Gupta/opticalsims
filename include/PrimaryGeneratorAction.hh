@@ -39,6 +39,8 @@
 #include "globals.hh"
 #include "AnalysisManagerHelper.hh"
 #include "include/config.h"
+#include "G4SystemOfUnits.hh"
+#include "OpticalGunConfig.hh"
 #ifdef With_Opticks
 #include "sphoton.h"
 #include "OpticksPhoton.h"
@@ -48,9 +50,8 @@
 class G4Event;
 class G4GeneralParticleSource;
 
-/// Primary generator action for GDML sensitive detector example
-
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+class
+    PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
 public:
   PrimaryGeneratorAction(std::string celer_offload_mode);

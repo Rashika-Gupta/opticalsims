@@ -4,13 +4,22 @@
 #include "RunAction.hh"
 #include "G4Run.hh"
 #include "G4AnalysisManager.hh"
+#include "G4GeneralParticleSourceData.hh"
 #include "G4Material.hh"
+#include "G4SingleParticleSource.hh"
+#include "G4SPSEneDistribution.hh"
+#include "G4SPSPosDistribution.hh"
 #include "G4ios.hh"
 #include <fstream>
+#include <iomanip>
 #include <G4Threading.hh>
+#include <G4SystemOfUnits.hh>
 #include <mutex>
+#include <sstream>
 #include <utility>
 #include <vector>
+#include "CelerOpticalPrimaryRunner.hh"
+#include "OpticalGunConfig.hh"
 
 RunAction::RunAction(std::string celer_offload_mode) : G4UserRunAction(), fmsg(nullptr), fFileName("out.csv"), celer_offload_mode_(std::move(celer_offload_mode))
 {
@@ -55,6 +64,27 @@ namespace
     thread_local int current_run_id = -1;
     thread_local double local_hit_callback_seconds = 0.0;
     thread_local std::size_t local_hits_received = 0;
+
+    std::string FilenameValue(double value)
+    {
+        std::ostringstream os;
+        os << std::fixed << std::setprecision(4) << value;
+        std::string result = os.str();
+
+        while (!result.empty() && result.back() == '0')
+        {
+            result.pop_back();
+        }
+        if (!result.empty() && result.back() == '.')
+        {
+            result.pop_back();
+        }
+        if (result == "-0")
+        {
+            result = "0";
+        }
+        return result;
+    }
 }
 
 RunAction::~RunAction()
@@ -70,7 +100,15 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     local_hit_callback_seconds = 0.0;
     local_hits_received = 0;
 
-    if (celer_offload_mode_ == "optical-distribution")
+    if (celer_offload_mode_ == "optical-gun")
+    {
+        if (celeritas::SharedParams::GetMode()
+            == celeritas::OffloadMode::enabled)
+        {
+            CelerOpticalPrimaryRunner::Instance().BeginOfRunAction();
+        }
+    }
+    else if (celer_offload_mode_ == "optical-distribution")
     {
         celeritas::UserActionIntegration::Instance()
             .BeginOfRunAction(run);
@@ -92,7 +130,38 @@ void RunAction::BeginOfRunAction(const G4Run *run)
                                 ? "geant4"
                                 : "celeritas";
 
-    std::string output_file = transport + "-" + celer_offload_mode_ + "-" + fFileName;
+    std::string output_file = transport + "-" + celer_offload_mode_;
+    if (celer_offload_mode_ == "optical-gun")
+    {
+        auto const &gun = OpticalGunConfig::Instance().parameters();
+        output_file += "-E" + FilenameValue(gun.mean_energy / eV) + "eV";
+        output_file += "-pos_" + FilenameValue(gun.position.x() / mm);
+        output_file += "_" + FilenameValue(gun.position.y() / mm);
+        output_file += "_" + FilenameValue(gun.position.z() / mm) + "mm";
+        output_file += "-events"
+                       + std::to_string(run->GetNumberOfEventToBeProcessed());
+    }
+    else if (celer_offload_mode_ == "electron-photon"
+             || celer_offload_mode_ == "optical-track"
+             || celer_offload_mode_ == "optical-distribution")
+    {
+        // GPS distribution data are shared by Geant4 worker threads, so this
+        // reads the values set by the /gps/* macro commands.
+        auto *source
+            = G4GeneralParticleSourceData::Instance()->GetCurrentSource();
+        CELER_VALIDATE(source, << "Geant4 GPS source is unavailable");
+
+        auto const energy = source->GetEneDist()->GetMonoEnergy();
+        auto const &position = source->GetPosDist()->GetCentreCoords();
+
+        output_file += "-E" + FilenameValue(energy / MeV) + "MeV";
+        output_file += "-pos_" + FilenameValue(position.x() / mm);
+        output_file += "_" + FilenameValue(position.y() / mm);
+        output_file += "_" + FilenameValue(position.z() / mm) + "mm";
+        output_file += "-events"
+                       + std::to_string(run->GetNumberOfEventToBeProcessed());
+    }
+    output_file += "-" + std::string(fFileName);
     if (analysisManager)
         analysisManager->OpenFile(output_file);
     cout << "Generating " << output_file << G4endl;
@@ -205,10 +274,12 @@ void RunAction::EndOfRunAction(const G4Run *run)
 {
     using Mode = celeritas::OffloadMode;
 
-    auto &tmi = celeritas::TrackingManagerIntegration::Instance();
-    if (G4Threading::IsWorkerThread() || !G4Threading::IsMultithreadedApplication())
+    if (celer_offload_mode_ == "electron-photon"
+        && (G4Threading::IsWorkerThread()
+            || !G4Threading::IsMultithreadedApplication()))
     {
-        if (celer_offload_mode_ == "electron-photon" && tmi.GetMode() == Mode::enabled)
+        auto &tmi = celeritas::TrackingManagerIntegration::Instance();
+        if (tmi.GetMode() == Mode::enabled)
         {
             auto &integration = celeritas::detail::IntegrationSingleton::instance();
             auto &local = dynamic_cast<celeritas::LocalTransporter &>(
@@ -243,7 +314,15 @@ void RunAction::EndOfRunAction(const G4Run *run)
         analysisManager->CloseFile();
     }
     // Return Celeritas to an invalid state
-    if (celer_offload_mode_ == "optical-distribution")
+    if (celer_offload_mode_ == "optical-gun")
+    {
+        if (celeritas::SharedParams::GetMode()
+            == celeritas::OffloadMode::enabled)
+        {
+            CelerOpticalPrimaryRunner::Instance().EndOfRunAction();
+        }
+    }
+    else if (celer_offload_mode_ == "optical-distribution")
     {
         celeritas::UserActionIntegration::Instance()
             .EndOfRunAction(run);

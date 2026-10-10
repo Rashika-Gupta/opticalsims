@@ -18,6 +18,7 @@
 #include <G4Event.hh>
 #include <G4EventManager.hh>
 #include "G4VPhysicalVolume.hh"
+#include "OpticalGunConfig.hh"
 
 // Celeritas includes
 #include <accel/AlongStepFactory.hh>
@@ -36,6 +37,7 @@
 #include "geocel/GeantGeoParams.hh"
 #include "geocel/g4/Convert.hh"
 #include <celeritas/Quantities.hh>
+#include <celeritas/inp/StandaloneInput.hh>
 
 //---------------------------------------------------------------------------//
 /*!
@@ -194,8 +196,41 @@ inline void RecordOpticalHits(
 inline OffloadConfiguration MakeOffloadConfiguration(
     std::string const &mode)
 {
+    if (mode == "optical-gun")
+    {
+        auto const &gun = OpticalGunConfig::Instance().parameters();
 
-    if (mode == "optical-gun" || mode == "optical-track")
+        CELER_VALIDATE(gun.num_photons > 0,
+                       << "optical gun photon count must be positive");
+        CELER_VALIDATE(gun.sigma_energy > 0,
+                       << "optical gun sigma energy must be positive");
+        CELER_VALIDATE(gun.min_energy < gun.max_energy,
+                       << "optical gun minimum energy must be below maximum energy");
+        CELER_VALIDATE(gun.mean_energy >= gun.min_energy && gun.mean_energy <= gun.max_energy,
+                       << "optical gun mean energy must be inside its truncation bounds");
+
+        celeritas::inp::OpticalPrimaryGenerator gen;
+        gen.primaries = gun.num_photons;
+
+        // Use the same truncated Gaussian energy distribution as Geant4.
+        using Normal = celeritas::inp::NormalDistribution;
+        using TruncatedNormal = celeritas::inp::TruncatedDistribution<Normal>;
+
+        gen.energy = TruncatedNormal{
+            Normal{gun.mean_energy / MeV, gun.sigma_energy / MeV},
+            gun.min_energy / MeV,
+            gun.max_energy / MeV};
+
+        gen.angle = celeritas::inp::IsotropicDistribution{};
+        gen.shape = celeritas::inp::PointDistribution{{gun.position.x() / cm,
+                                                       gun.position.y() / cm,
+                                                       gun.position.z() / cm}};
+
+        return {
+            {},
+            std::move(gen)};
+    }
+    if (mode == "optical-track")
     {
         return {
             {G4OpticalPhoton::Definition()},
