@@ -55,8 +55,8 @@ include(${Geant4_USE_FILE})
 #
 include_directories(${PROJECT_SOURCE_DIR}/include 
                     ${Geant4_INCLUDE_DIR})
-file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
-file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
+file(GLOB sources CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/*.cc)
+file(GLOB headers CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/include/*.hh)
 
 if (With_Opticks)
   file(GLOB OpRHDRS ${CMAKE_SOURCE_DIR}/include/${DIR}/Opticks/*.h)
@@ -124,7 +124,7 @@ ROOT::ROOTDataFrame
 # build G04. This is so that we can run the executable directly because it
 # relies on these scripts being in the current working directory.
 #
-set(G04_SCRIPTS macros/iso.mac macros/test.mac macros/Speed.mac macros/g04.mac vis.mac GDML/test.gdml GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml)
+set(G04_SCRIPTS macros/iso.mac macros/test.mac macros/Speed.mac macros/g04.mac macros/g04-photon.mac vis.mac GDML/test.gdml GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml)
 foreach(_script ${G04_SCRIPTS})
   configure_file(
     ${PROJECT_SOURCE_DIR}/${_script}
@@ -144,4 +144,3 @@ add_custom_target(G04 DEPENDS gdml_det)
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
 install(TARGETS gdml_det DESTINATION bin)
-

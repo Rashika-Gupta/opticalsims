@@ -36,6 +36,8 @@
 
 #include <vector>
 
+#include <chrono>
+
 #include "ActionInitialization.hh"
 #include "DetectorConstruction.hh"
 #include "SensitiveDetector.hh"
@@ -46,6 +48,7 @@
 #include "G4UIExecutive.hh"
 #include "G4GDMLParser.hh"
 #include "ColorReader.hh"
+#include "RunAction.hh"
 // PhysicsList
 #include "G4EmStandardPhysics_option4.hh"
 #include "PhysicsList.hh"
@@ -70,9 +73,14 @@
 #include <accel/UserActionIntegration.hh>
 #include <corecel/sys/Environment.hh>
 #include "MakeCelerOptions.hh"
+#include "CelerOpticalPrimaryRunner.hh"
+#include "OpticalGunConfig.hh"
 
 int main(int argc, char **argv)
 {
+  using Clock = std::chrono::steady_clock;
+  RunAction::ProcessTiming timing;
+
   // Opticks Initialization
 #ifdef With_Opticks
   int device;
@@ -86,7 +94,7 @@ int main(int argc, char **argv)
     std::cout<<"Device "<<device<< std::endl;
   */
 #endif
-  G4Random::setTheSeed(12345);
+  G4Random::setTheSeed(49809234);
   G4cout << G4endl;
   G4cout << " Usage : " << G4endl;
   G4cout << "Interactive Mode : ./gdml_det i ../GDML/dune10kt_v5_refactored_1x2x6_nowires_NoField.gdml macros/g04.mac"
@@ -104,6 +112,8 @@ int main(int argc, char **argv)
   // Detect interactive mode (if only one argument) and define UI session
   auto *fReader = new ColorReader;
   auto parser = new G4GDMLParser(fReader);
+  // Load the GDML geometry and materials; this is reported as gdml_read.
+  timing.gdml_start = Clock::now();
   G4UIExecutive *ui = 0;
   if (strcmp(argv[1], "i") == 0)
   {
@@ -114,10 +124,14 @@ int main(int argc, char **argv)
   {
     parser->Read(argv[1], false);
   }
+  timing.gdml_end = Clock::now();
 
   auto *runManager = G4RunManagerFactory::CreateRunManager();
   setenv("OPTICALSIMS_CELERITAS_MODE", DEFAULT_OFFLOAD_MODE, 0);
-  std::string const &offload_mode = celeritas::getenv("OPTICALSIMS_CELERITAS_MODE");
+  std::string const offload_mode = celeritas::getenv("OPTICALSIMS_CELERITAS_MODE");
+
+  // Register /opticalGun/* commands before executing the user macro.
+  OpticalGunConfig::Instance();
 
   // Physics list
   // Physics List owns all optical-process configurations
@@ -128,7 +142,17 @@ int main(int argc, char **argv)
   physics_list->RegisterPhysics(new G4OpticalPhysicsOpticks());
 #endif
 
-  if (offload_mode == "optical-distribution" && celeritas::SharedParams::GetMode() == celeritas::OffloadMode::enabled)
+  if (offload_mode == "optical-gun")
+  {
+    // Optical primaries use an optical-only Celeritas problem. Drive it from
+    // the event loop instead of installing a Geant4 tracking manager. When
+    // Celeritas is disabled, the runner remains inactive and Geant4 generates
+    // the optical primaries.
+    CelerOpticalPrimaryRunner::Instance().SetOptionsFactory(
+        [offload_mode]
+        { return MakeCelerOptions(offload_mode); });
+  }
+  else if (offload_mode == "optical-distribution" && celeritas::SharedParams::GetMode() == celeritas::OffloadMode::enabled)
   {
 
     // Optical generation data is offloaded through user actions
@@ -152,15 +176,19 @@ int main(int argc, char **argv)
   // User action initialization
   runManager->SetUserInitialization(new DetectorConstruction(parser));
   runManager->SetUserInitialization(new ActionInitialization(offload_mode));
+
   runManager->SetNumberOfThreads(1);
+
+  timing.init_start = Clock::now();
   runManager->Initialize();
+  timing.init_end = Clock::now();
+
   auto *pm = G4OpticalPhoton::Definition()->GetProcessManager();
   auto *pv = pm->GetProcessList();
 
   // Initialize visualization
   G4VisManager *visManager = new G4VisExecutive;
   visManager->Initialize();
-
   // Get the pointer to the User Interface manager
   G4UImanager *UImanager = G4UImanager::GetUIpointer();
 
@@ -181,8 +209,13 @@ int main(int argc, char **argv)
     ui->SessionStart();
     delete ui;
   }
+  const bool celeritas_enabled =
+      celeritas::SharedParams::GetMode() == celeritas::OffloadMode::enabled;
+
   delete visManager;
   delete runManager;
   delete parser;
   delete fReader;
+
+  RunAction::WriteTimingJson(timing, offload_mode, celeritas_enabled);
 }
