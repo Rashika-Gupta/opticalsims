@@ -7,6 +7,7 @@
 
 #include "G4UserEventAction.hh"
 #include "globals.hh"
+#include <cstddef>
 #include <string>
 #include <chrono>
 class G4Event;
@@ -24,6 +25,7 @@ private:
     using Clock = std::chrono::steady_clock;
     Clock::time_point startTime;
     std::string celer_offload_mode_;
+    std::size_t celer_optical_tracks_at_event_start_{0};
 };
 
 #endif // GDMLOPTICKS_EVENTACTION_HH

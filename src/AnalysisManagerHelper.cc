@@ -25,6 +25,16 @@ G4int AnalysisManagerHelper::GetG4ScintPhotons()
     return G4ScintPhotons;
 }
 
+std::size_t AnalysisManagerHelper::GetG4GeneratedOpticalPhotons() const
+{
+    return G4GeneratedOpticalPhotons;
+}
+
+std::size_t AnalysisManagerHelper::GetG4GeneratedScintillationPhotons() const
+{
+    return G4GeneratedScintillationPhotons;
+}
+
 G4int AnalysisManagerHelper::GetOpticksScintPhotons()
 {
     return OpticksScintPhotons;
@@ -49,6 +59,18 @@ void AnalysisManagerHelper::AddG4ScintPhotons(G4int ph)
 {
     G4ScintPhotons += ph;
 }
+
+void AnalysisManagerHelper::AddG4GeneratedOpticalPhotons(std::size_t count)
+{
+    G4GeneratedOpticalPhotons += count;
+}
+
+void AnalysisManagerHelper::AddG4GeneratedScintillationPhotons(
+    std::size_t count)
+{
+    G4GeneratedScintillationPhotons += count;
+}
+
 void AnalysisManagerHelper::AddG4CerenkovPhotons(G4int ph)
 {
     G4CerenkovPhotons += ph;
@@ -78,6 +100,8 @@ void AnalysisManagerHelper::Reset()
     OpticksScintPhotons = 0;
     G4CerenkovPhotons = 0;
     G4ScintPhotons = 0;
+    G4GeneratedOpticalPhotons = 0;
+    G4GeneratedScintillationPhotons = 0;
     fbatchID = 0;
     ArapucaHits.clear();
     ArapucaHits.shrink_to_fit();
@@ -102,6 +126,8 @@ void AnalysisManagerHelper::SavePhotonInfotoFile()
 void AnalysisManagerHelper::SaveG4HitsToFile()
 {
     G4AutoLock lock(&FileMutex);
+    G4cout << "Saving " << ArapucaHits.size() << " Geant4 hits to file..." << G4endl;
+
     G4AnalysisManager *AnaMngr = G4AnalysisManager::Instance();
     auto run = G4RunManager::GetRunManager();
     for (auto hit : ArapucaHits)

@@ -14,11 +14,13 @@
 #include "SensitiveDetector.hh"
 #include "ArapucaHit.hh"
 #include "AnalysisManagerHelper.hh"
+#include "CelerOpticalPrimaryRunner.hh"
 
 #include "include/config.h"
 #include <accel/UserActionIntegration.hh>
 #include <corecel/sys/Environment.hh>
 #include <accel/detail/IntegrationSingleton.hh>
+#include <accel/LocalOpticalTrackOffload.hh>
 #include <accel/LocalTransporter.hh>
 #include <celeritas/optical/OpticalCollector.hh>
 #include <celeritas/optical/CoreState.hh>
@@ -46,6 +48,23 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 
     anaHelper->Reset();
 
+    if (celer_offload_mode_ == "optical-gun"
+        && celeritas::SharedParams::GetMode()
+               == celeritas::OffloadMode::enabled)
+    {
+        CelerOpticalPrimaryRunner::Instance()
+            .GenerateAndTransport(event->GetEventID());
+    }
+
+    if (celer_offload_mode_ == "optical-track"
+        && celeritas::detail::IntegrationSingleton::instance().mode()
+               == celeritas::OffloadMode::enabled)
+    {
+        auto &offload = dynamic_cast<celeritas::LocalOpticalTrackOffload &>(
+            celeritas::detail::IntegrationSingleton::instance().local_offload());
+        celer_optical_tracks_at_event_start_ = offload.num_pushed();
+    }
+
     if (celer_offload_mode_ == "optical-distribution")
     {
         celeritas::UserActionIntegration::Instance()
@@ -55,6 +74,25 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 
 void EventAction::EndOfEventAction(const G4Event *event)
 {
+    G4cout << "Event " << event->GetEventID()
+           << ": Geant4 scintillation photons generated: "
+           << anaHelper->GetG4GeneratedScintillationPhotons()
+           << "; all optical secondaries: "
+           << anaHelper->GetG4GeneratedOpticalPhotons()
+           << G4endl;
+
+    if (celer_offload_mode_ == "optical-track"
+        && celeritas::detail::IntegrationSingleton::instance().mode()
+               == celeritas::OffloadMode::enabled)
+    {
+        auto &offload = dynamic_cast<celeritas::LocalOpticalTrackOffload &>(
+            celeritas::detail::IntegrationSingleton::instance().local_offload());
+        G4cout << "Event " << event->GetEventID()
+               << ": Celeritas initialized "
+               << offload.num_pushed() - celer_optical_tracks_at_event_start_
+               << " optical tracks from Geant4" << G4endl;
+    }
+
 #ifdef With_Opticks
     G4int evtID = event->GetEventID();
 #endif

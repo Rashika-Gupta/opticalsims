@@ -8,6 +8,7 @@
 #include "G4AutoLock.hh"
 #include "G4ThreeVector.hh"
 #include "celeritas/optical/DetectorData.hh"
+#include <cstddef>
 #ifndef GDMLOPTICKS_ANALYSISMANAGERHELPER_HH
 #define GDMLOPTICKS_ANALYSISMANAGERHELPER_HH
 
@@ -39,6 +40,8 @@ public:
     ~AnalysisManagerHelper();
 
     G4int GetG4ScintPhotons();
+    std::size_t GetG4GeneratedOpticalPhotons() const;
+    std::size_t GetG4GeneratedScintillationPhotons() const;
     G4int GetOpticksScintPhotons();
     G4int GetG4CerenkovPhotons();
     G4int GetOpticksCerenkovPhotons();
@@ -46,6 +49,8 @@ public:
     const std::map<G4String, G4int> &GetDetectIds();
 
     void AddG4ScintPhotons(G4int ph);
+    void AddG4GeneratedOpticalPhotons(std::size_t count);
+    void AddG4GeneratedScintillationPhotons(std::size_t count);
     void AddOpticksScintPhotons(G4int ph);
     void AddG4CerenkovPhotons(G4int ph);
     void AddOpticksCerenkovPhotons(G4int ph);
@@ -71,6 +76,8 @@ private:
     G4int G4CerenkovPhotons{0};
     G4int OpticksCerenkovPhotons{0};
     G4int G4ScintPhotons{0};
+    std::size_t G4GeneratedOpticalPhotons{0};
+    std::size_t G4GeneratedScintillationPhotons{0};
     G4int OpticksScintPhotons{0};
     G4double Duration{0};
     std::map<G4String, G4int> fDetectIds;

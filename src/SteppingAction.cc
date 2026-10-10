@@ -4,6 +4,7 @@
 #include "G4OpticalPhoton.hh"
 #include "G4OpBoundaryProcess.hh"
 #include "G4ProcessManager.hh"
+#include "G4Step.hh"
 #include "SteppingAction.hh"
 #include "ArapucaHit.hh"
 #include "G4Exception.hh"
@@ -21,6 +22,27 @@ void SteppingAction::UserSteppingAction(const G4Step *step)
 {
     auto aTrack = step->GetTrack();
     G4ParticleDefinition *pdef = aTrack->GetDefinition();
+
+    // Count photons when Geant4 creates them, before sensor detection.
+    if (step->GetNumberOfSecondariesInCurrentStep() > 0)
+    {
+        std::size_t generated = 0;
+        std::size_t scintillation = 0;
+        for (auto const *secondary : *step->GetSecondaryInCurrentStep())
+        {
+            if (secondary->GetDefinition() == G4OpticalPhoton::Definition())
+            {
+                ++generated;
+                auto const *creator = secondary->GetCreatorProcess();
+                if (creator && creator->GetProcessName() == "Scintillation")
+                {
+                    ++scintillation;
+                }
+            }
+        }
+        anaHelper->AddG4GeneratedOpticalPhotons(generated);
+        anaHelper->AddG4GeneratedScintillationPhotons(scintillation);
+    }
 
 #ifdef With_DEBUG
     // Collect the steps
